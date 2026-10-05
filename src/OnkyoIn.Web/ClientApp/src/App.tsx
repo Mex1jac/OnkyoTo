@@ -2,20 +2,27 @@ import { useState } from 'react'
 import { discover, powerOn, volumeUp, volumeDown } from './api'
 import './App.css'
 
+type MessageKind = 'info' | 'success' | 'error'
+
+interface Feedback {
+  kind: MessageKind
+  text: string
+}
+
 function App() {
   const [ipAddress, setIpAddress] = useState('')
-  const [status, setStatus] = useState('')
+  const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [busy, setBusy] = useState(false)
 
-  // Runs an async action while showing status and preventing double clicks.
+  // Runs an async action while showing status, and reports success or failure.
   async function run(label: string, action: () => Promise<void>) {
     setBusy(true)
-    setStatus(`${label}...`)
+    setFeedback({ kind: 'info', text: `${label}...` })
     try {
       await action()
-      setStatus(`${label}: done`)
+      setFeedback({ kind: 'success', text: `${label}: done` })
     } catch (error) {
-      setStatus(`${label}: ${(error as Error).message}`)
+      setFeedback({ kind: 'error', text: (error as Error).message })
     } finally {
       setBusy(false)
     }
@@ -61,7 +68,11 @@ function App() {
         </button>
       </section>
 
-      {status && <p className="status">{status}</p>}
+      {feedback && (
+        <p className={`status ${feedback.kind}`} role={feedback.kind === 'error' ? 'alert' : 'status'}>
+          {feedback.text}
+        </p>
+      )}
     </main>
   )
 }

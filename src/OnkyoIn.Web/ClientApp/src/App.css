@@ -62,5 +62,16 @@ button:disabled {
 .status {
   margin-top: 1.5rem;
   font-weight: 500;
+}
+
+.status.info {
   color: #2563eb;
+}
+
+.status.success {
+  color: #16a34a;
+}
+
+.status.error {
+  color: #dc2626;
 }

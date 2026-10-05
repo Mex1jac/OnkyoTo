@@ -1,5 +1,6 @@
 using OnkyoIn.Control.Application.Services;
 using OnkyoIn.Control.Domain.Gateways;
+using OnkyoIn.Control.Infrastructure.ErrorHandling;
 using OnkyoIn.Control.Infrastructure.Onkyo;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Controllers + OpenAPI
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+
+// Central error handling: maps domain exceptions to ProblemDetails responses.
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<OnkyoExceptionHandler>();
 
 // DDD wiring: application service depends on the gateway port (dependency inversion).
 builder.Services.AddScoped<IOnkyoDeviceGateway, OnkyoDeviceGateway>();
@@ -23,6 +28,8 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseExceptionHandler();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

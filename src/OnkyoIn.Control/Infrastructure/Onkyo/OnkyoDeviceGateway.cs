@@ -1,5 +1,6 @@
 using Onkyo.eISCP;
 using Onkyo.eISCP.Commands;
+using OnkyoIn.Control.Domain.Exceptions;
 using OnkyoIn.Control.Domain.Gateways;
 
 namespace OnkyoIn.Control.Infrastructure.Onkyo;
@@ -7,6 +8,7 @@ namespace OnkyoIn.Control.Infrastructure.Onkyo;
 /// <summary>
 /// Infrastructure adapter that talks to real Onkyo devices using the
 /// Onkyo.eISCP library. Implements the <see cref="IOnkyoDeviceGateway"/> port.
+/// Translates low-level library/network errors into domain exceptions.
 /// </summary>
 public class OnkyoDeviceGateway : IOnkyoDeviceGateway
 {
@@ -14,32 +16,59 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
 
     public async Task<string> DiscoverAsync(CancellationToken cancellationToken = default)
     {
-        var receivers = await ISCPConnection.DiscoverAsync();
+        List<ReceiverInfo> receivers;
+        try
+        {
+            receivers = await ISCPConnection.DiscoverAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new DeviceCommunicationException(
+                "Failed to scan the network for Onkyo devices.", ex);
+        }
 
-        var first = receivers.FirstOrDefault()
-            ?? throw new InvalidOperationException("No Onkyo device was found on the network.");
+        var first = receivers.FirstOrDefault();
+        if (first is null)
+        {
+            throw new DeviceNotFoundException(
+                "No Onkyo device was found on the network.");
+        }
 
         return first.IPAddress.ToString();
     }
 
-    public async Task PowerOnAsync(string ipAddress, CancellationToken cancellationToken = default)
-    {
-        using var receiver = new Receiver();
-        await receiver.ConnectAsync(ipAddress, DefaultPort);
-        await receiver.PowerOnAsync(Zone.Main);
-    }
+    public Task PowerOnAsync(string ipAddress, CancellationToken cancellationToken = default)
+        => SendAsync(ipAddress, receiver => receiver.PowerOnAsync(Zone.Main));
 
-    public async Task VolumeUpAsync(string ipAddress, CancellationToken cancellationToken = default)
-    {
-        using var receiver = new Receiver();
-        await receiver.ConnectAsync(ipAddress, DefaultPort);
-        await receiver.SetVolumeUpAsync(Zone.Main);
-    }
+    public Task VolumeUpAsync(string ipAddress, CancellationToken cancellationToken = default)
+        => SendAsync(ipAddress, receiver => receiver.SetVolumeUpAsync(Zone.Main));
 
-    public async Task VolumeDownAsync(string ipAddress, CancellationToken cancellationToken = default)
+    public Task VolumeDownAsync(string ipAddress, CancellationToken cancellationToken = default)
+        => SendAsync(ipAddress, receiver => receiver.SetVolumeDownAsync(Zone.Main));
+
+    private static async Task SendAsync(string ipAddress, Func<Receiver, Task> command)
     {
-        using var receiver = new Receiver();
-        await receiver.ConnectAsync(ipAddress, DefaultPort);
-        await receiver.SetVolumeDownAsync(Zone.Main);
+        if (string.IsNullOrWhiteSpace(ipAddress))
+        {
+            throw new ArgumentException("The device IP address is required.", nameof(ipAddress));
+        }
+
+        try
+        {
+            using var receiver = new Receiver();
+            await receiver.ConnectAsync(ipAddress, DefaultPort);
+            await command(receiver);
+        }
+        catch (TimeoutException ex)
+        {
+            throw new DeviceCommunicationException(
+                $"The device at {ipAddress} did not respond in time.", ex);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException
+                                     and not DeviceCommunicationException)
+        {
+            throw new DeviceCommunicationException(
+                $"Could not communicate with the device at {ipAddress}.", ex);
+        }
     }
 }

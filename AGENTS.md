@@ -66,8 +66,8 @@
 | 3 | Enviar comando de encendido | Alta | Hecho | `PWR01` vía Onkyo.eISCP |
 | 4 | Subir volumen | Media | Hecho | `MVLUP` |
 | 5 | Bajar volumen | Media | Hecho | `MVLDOWN` |
-| 6 | Tests de las funcionalidades anteriores | Alta | Hecho | 14 tests en xUnit |
-| 7 | Manejo de errores/estados en la UI (feedback al usuario) | Media | Pendiente | Mejorar mensajes de error |
+| 6 | Tests de las funcionalidades anteriores | Alta | Hecho | 21 tests en xUnit |
+| 7 | Manejo de errores/estados en la UI (feedback al usuario) | Media | Hecho | ProblemDetails + excepciones de dominio |
 | 8 | Consultar estado del dispositivo (encendido, volumen actual) | Media | Pendiente | `UpdateStatusAsync` de la librería |
 | 9 | Configurar appsettings por entorno y CORS estricto | Baja | Pendiente | Hoy CORS es AllowAny |
 | 10 | Integrar el submódulo al clonar (`git submodule update --init`) | Media | Pendiente | Documentar en README |
@@ -78,3 +78,5 @@
 - El frontend es una **SPA React** servida aparte por Vite en desarrollo; en producción se puede publicar en `wwwroot`.
 - El puerto eISCP por defecto es **60128** (TCP), y el descubrimiento es por **UDP broadcast** (`ECNQSTN`).
 - Control expone CORS abierto solo para facilitar el desarrollo local.
+- **Manejo de errores:** se usan excepciones de dominio (`DeviceNotFoundException`, `DeviceCommunicationException` en Control; `ControlApiException` en Web) traducidas a **ProblemDetails** estándar por un `IExceptionHandler` en cada API. El SPA lee `detail` del ProblemDetails para mostrar mensajes claros.
+- **Códigos HTTP:** 400 petición inválida, 404 dispositivo no encontrado, 502 error de comunicación con el dispositivo / servicio inalcanzable, 504 timeout, 500 inesperado.
