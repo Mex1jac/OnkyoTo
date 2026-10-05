@@ -1,5 +1,6 @@
 using OnkyoIn.Control.Application.Services;
 using OnkyoIn.Control.Domain.Gateways;
+using OnkyoIn.Control.Infrastructure.Configuration;
 using OnkyoIn.Control.Infrastructure.ErrorHandling;
 using OnkyoIn.Control.Infrastructure.Onkyo;
 
@@ -17,12 +18,31 @@ builder.Services.AddExceptionHandler<OnkyoExceptionHandler>();
 builder.Services.AddScoped<IOnkyoDeviceGateway, OnkyoDeviceGateway>();
 builder.Services.AddScoped<DeviceControlService>();
 
-// CORS so the React SPA (OnkyoIn.Web) can call this API from the browser.
+// CORS: origins are configured per environment. In Development the SPA
+// (OnkyoIn.Web, or the Vite dev server) is allowed; in Production the list
+// must be set explicitly in appsettings.Production.json.
 const string SpaCorsPolicy = "SpaCorsPolicy";
+var corsOptions = builder.Configuration
+    .GetSection(CorsOptions.SectionName)
+    .Get<CorsOptions>() ?? new CorsOptions();
+
+if (corsOptions.AllowedOrigins.Length == 0 && !builder.Environment.IsDevelopment())
+{
+    throw new InvalidOperationException(
+        "No CORS origins configured. Set 'Cors:AllowedOrigins' for this environment.");
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(SpaCorsPolicy, policy =>
-        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+    {
+        if (corsOptions.AllowedOrigins.Length > 0)
+        {
+            policy.WithOrigins(corsOptions.AllowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
+    });
 });
 
 var app = builder.Build();

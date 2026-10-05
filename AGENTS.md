@@ -66,10 +66,10 @@
 | 3 | Enviar comando de encendido | Alta | Hecho | `PWR01` vía Onkyo.eISCP |
 | 4 | Subir volumen | Media | Hecho | `MVLUP` |
 | 5 | Bajar volumen | Media | Hecho | `MVLDOWN` |
-| 6 | Tests de las funcionalidades anteriores | Alta | Hecho | 25 tests en xUnit |
+| 6 | Tests de las funcionalidades anteriores | Alta | Hecho | 27 tests en xUnit |
 | 7 | Manejo de errores/estados en la UI (feedback al usuario) | Media | Hecho | ProblemDetails + excepciones de dominio |
 | 8 | Consultar estado del dispositivo (encendido, volumen actual) | Media | Hecho | `GET /api/device/state` |
-| 9 | Configurar appsettings por entorno y CORS estricto | Baja | Pendiente | Hoy CORS es AllowAny |
+| 9 | Configurar appsettings por entorno y CORS estricto | Baja | Hecho | `Cors:AllowedOrigins` por entorno |
 | 10 | Integrar el submódulo al clonar (`git submodule update --init`) | Media | Pendiente | Documentar en README |
 
 ## 9. Notas y decisiones
@@ -77,7 +77,7 @@
 - La librería `Onkyo.eISCP` **no está publicada en NuGet**; se incorpora como submódulo Git y referencia de proyecto.
 - El frontend es una **SPA React** servida aparte por Vite en desarrollo; en producción se puede publicar en `wwwroot`.
 - El puerto eISCP por defecto es **60128** (TCP), y el descubrimiento es por **UDP broadcast** (`ECNQSTN`).
-- Control expone CORS abierto solo para facilitar el desarrollo local.
+- **Configuración por entorno:** CORS se controla con la sección `Cors:AllowedOrigins` en `appsettings.json` (vacío por defecto) y `appsettings.Development.json` (orígenes locales: Vite `5173`, Web `7261/5241`). En entornos distintos de Development, si no hay orígenes configurados, la app **falla al arrancar** en lugar de permitir todo. La URL de Control (`ControlApi:BaseUrl`) es obligatoria en Web. Los valores pueden sobreescribirse por variables de entorno, p. ej. `Cors__AllowedOrigins__0`.
 - **Manejo de errores:** se usan excepciones de dominio (`DeviceNotFoundException`, `DeviceCommunicationException` en Control; `ControlApiException` en Web) traducidas a **ProblemDetails** estándar por un `IExceptionHandler` en cada API. El SPA lee `detail` del ProblemDetails para mostrar mensajes claros.
 - **Códigos HTTP:** 400 petición inválida, 404 dispositivo no encontrado, 502 error de comunicación con el dispositivo / servicio inalcanzable, 504 timeout, 500 inesperado.
 - **Endpoints de la API:** `GET /api/device/discover`, `GET /api/device/state?ipAddress=...`, `POST /api/device/power-on`, `POST /api/device/volume/up`, `POST /api/device/volume/down`.
