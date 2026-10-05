@@ -75,3 +75,38 @@ button:disabled {
 .status.error {
   color: #dc2626;
 }
+
+.state {
+  flex-direction: row;
+  gap: 2rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #f9fafb;
+}
+
+.state-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.state-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+}
+
+.state-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.state-value.on {
+  color: #16a34a;
+}
+
+.state-value.off {
+  color: #9ca3af;
+}

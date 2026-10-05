@@ -7,6 +7,12 @@ export interface DiscoverResponse {
   ipAddress: string
 }
 
+export interface DeviceState {
+  ipAddress: string
+  isPoweredOn: boolean
+  volume: number
+}
+
 /** Shape of an ASP.NET Core ProblemDetails error response. */
 interface ProblemDetails {
   title?: string
@@ -56,6 +62,11 @@ export async function discover(): Promise<string> {
   const response = await request('/api/device/discover')
   const data = (await response.json()) as DiscoverResponse
   return data.ipAddress
+}
+
+export async function getState(ipAddress: string): Promise<DeviceState> {
+  const response = await request(`/api/device/state?ipAddress=${encodeURIComponent(ipAddress)}`)
+  return (await response.json()) as DeviceState
 }
 
 function post(path: string, ipAddress: string): Promise<Response> {

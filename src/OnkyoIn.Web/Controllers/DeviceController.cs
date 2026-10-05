@@ -26,6 +26,16 @@ public class DeviceController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Reads the current power and volume state of the device.</summary>
+    [HttpGet("state")]
+    public async Task<ActionResult<DeviceStateResponse>> GetState(
+        [FromQuery] string ipAddress,
+        CancellationToken cancellationToken)
+    {
+        var state = await _deviceApp.GetStateAsync(ipAddress, cancellationToken);
+        return Ok(new DeviceStateResponse(state.IpAddress, state.IsPoweredOn, state.Volume));
+    }
+
     /// <summary>Sends the power-on command to the device.</summary>
     [HttpPost("power-on")]
     public async Task<IActionResult> PowerOn(DeviceCommandRequest request, CancellationToken cancellationToken)

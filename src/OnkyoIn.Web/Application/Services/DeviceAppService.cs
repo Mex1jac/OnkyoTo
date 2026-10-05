@@ -22,6 +22,9 @@ public class DeviceAppService
         return new DiscoverResponse(ipAddress);
     }
 
+    public Task<DeviceState> GetStateAsync(string ipAddress, CancellationToken cancellationToken = default)
+        => _controlClient.GetStateAsync(ipAddress, cancellationToken);
+
     public Task PowerOnAsync(DeviceCommandRequest request, CancellationToken cancellationToken = default)
         => _controlClient.PowerOnAsync(request.IpAddress, cancellationToken);
 

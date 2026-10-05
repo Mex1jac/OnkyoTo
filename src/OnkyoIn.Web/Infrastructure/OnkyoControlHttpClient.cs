@@ -33,6 +33,22 @@ public class OnkyoControlHttpClient : IOnkyoControlClient
                 "The control API did not return an IP address.");
     }
 
+    public async Task<DeviceState> GetStateAsync(string ipAddress, CancellationToken cancellationToken = default)
+    {
+        var url = $"api/device/state?ipAddress={Uri.EscapeDataString(ipAddress)}";
+        var response = await SendAsync(
+            () => _httpClient.GetAsync(url, cancellationToken),
+            cancellationToken);
+
+        var payload = await ReadAsync<ControlStateResponse>(response, cancellationToken);
+
+        return payload is null
+            ? throw new ControlApiException(
+                (int)response.StatusCode,
+                "The control API did not return the device state.")
+            : new DeviceState(payload.IpAddress, payload.IsPoweredOn, payload.Volume);
+    }
+
     public Task PowerOnAsync(string ipAddress, CancellationToken cancellationToken = default)
         => PostAsync("api/device/power-on", ipAddress, cancellationToken);
 
@@ -111,6 +127,8 @@ public class OnkyoControlHttpClient : IOnkyoControlClient
     }
 
     private sealed record ControlDiscoverResponse(string IpAddress);
+
+    private sealed record ControlStateResponse(string IpAddress, bool IsPoweredOn, int Volume);
 
     private sealed record ProblemResponse(string? Title, string? Detail, int? Status);
 }

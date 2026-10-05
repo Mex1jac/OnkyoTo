@@ -21,6 +21,12 @@ public class DeviceControlService
         return new DiscoverResponse(ipAddress);
     }
 
+    public async Task<DeviceStateResponse> GetStateAsync(string ipAddress, CancellationToken cancellationToken = default)
+    {
+        var state = await _gateway.GetStateAsync(ipAddress, cancellationToken);
+        return new DeviceStateResponse(ipAddress, state.IsPoweredOn, state.Volume);
+    }
+
     public Task PowerOnAsync(DeviceCommandRequest request, CancellationToken cancellationToken = default)
         => _gateway.PowerOnAsync(request.IpAddress, cancellationToken);
 

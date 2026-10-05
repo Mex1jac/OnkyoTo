@@ -1,5 +1,6 @@
 using Onkyo.eISCP;
 using Onkyo.eISCP.Commands;
+using OnkyoIn.Control.Domain.Entities;
 using OnkyoIn.Control.Domain.Exceptions;
 using OnkyoIn.Control.Domain.Gateways;
 
@@ -37,16 +38,34 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
         return first.IPAddress.ToString();
     }
 
+    public async Task<DeviceState> GetStateAsync(string ipAddress, CancellationToken cancellationToken = default)
+    {
+        var (power, volume) = await SendAsync(ipAddress, async receiver =>
+        {
+            var powerStatus = await receiver.GetPowerStatusAsync(Zone.Main);
+            var volumeStatus = await receiver.GetVolumeAsync(Zone.Main);
+            return (powerStatus, volumeStatus);
+        });
+
+        // The library returns -1 for the volume when the value is "N/A".
+        var volumeLevel = volume.VolumeLevel < 0 ? 0 : volume.VolumeLevel;
+
+        return new DeviceState(power.SystemOn, volumeLevel);
+    }
+
     public Task PowerOnAsync(string ipAddress, CancellationToken cancellationToken = default)
-        => SendAsync(ipAddress, receiver => receiver.PowerOnAsync(Zone.Main));
+        => SendAsync(ipAddress, async receiver => { await receiver.PowerOnAsync(Zone.Main); return true; });
 
     public Task VolumeUpAsync(string ipAddress, CancellationToken cancellationToken = default)
-        => SendAsync(ipAddress, receiver => receiver.SetVolumeUpAsync(Zone.Main));
+        => SendAsync(ipAddress, async receiver => { await receiver.SetVolumeUpAsync(Zone.Main); return true; });
 
     public Task VolumeDownAsync(string ipAddress, CancellationToken cancellationToken = default)
-        => SendAsync(ipAddress, receiver => receiver.SetVolumeDownAsync(Zone.Main));
+        => SendAsync(ipAddress, async receiver => { await receiver.SetVolumeDownAsync(Zone.Main); return true; });
 
-    private static async Task SendAsync(string ipAddress, Func<Receiver, Task> command)
+    private static Task SendAsync(string ipAddress, Func<Receiver, Task> command)
+        => SendAsync(ipAddress, async receiver => { await command(receiver); return true; });
+
+    private static async Task<T> SendAsync<T>(string ipAddress, Func<Receiver, Task<T>> action)
     {
         if (string.IsNullOrWhiteSpace(ipAddress))
         {
@@ -57,7 +76,7 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
         {
             using var receiver = new Receiver();
             await receiver.ConnectAsync(ipAddress, DefaultPort);
-            await command(receiver);
+            return await action(receiver);
         }
         catch (TimeoutException ex)
         {

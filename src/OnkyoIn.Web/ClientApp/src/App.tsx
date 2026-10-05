@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { discover, powerOn, volumeUp, volumeDown } from './api'
+import { discover, getState, powerOn, volumeUp, volumeDown, type DeviceState } from './api'
 import './App.css'
 
 type MessageKind = 'info' | 'success' | 'error'
@@ -11,6 +11,7 @@ interface Feedback {
 
 function App() {
   const [ipAddress, setIpAddress] = useState('')
+  const [state, setState] = useState<DeviceState | null>(null)
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -32,6 +33,12 @@ function App() {
     run('Discovering device', async () => {
       const ip = await discover()
       setIpAddress(ip)
+    })
+  }
+
+  function handleRefreshState() {
+    run('Reading device state', async () => {
+      setState(await getState(ipAddress))
     })
   }
 
@@ -66,7 +73,25 @@ function App() {
         <button onClick={() => run('Volume down', () => volumeDown(ipAddress))} disabled={busy || !hasDevice}>
           Volume −
         </button>
+        <button onClick={handleRefreshState} disabled={busy || !hasDevice}>
+          Refresh state
+        </button>
       </section>
+
+      {state && (
+        <section className="panel state" aria-label="Device state">
+          <div className="state-item">
+            <span className="state-label">Power</span>
+            <span className={`state-value ${state.isPoweredOn ? 'on' : 'off'}`}>
+              {state.isPoweredOn ? 'On' : 'Off'}
+            </span>
+          </div>
+          <div className="state-item">
+            <span className="state-label">Volume</span>
+            <span className="state-value">{state.volume}</span>
+          </div>
+        </section>
+      )}
 
       {feedback && (
         <p className={`status ${feedback.kind}`} role={feedback.kind === 'error' ? 'alert' : 'status'}>

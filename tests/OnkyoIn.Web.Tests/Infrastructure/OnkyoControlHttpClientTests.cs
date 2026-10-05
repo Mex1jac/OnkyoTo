@@ -85,4 +85,38 @@ public class OnkyoControlHttpClientTests
 
         await client.PowerOnAsync("192.168.1.50");
     }
+
+    [Fact]
+    public async Task GetStateAsync_WhenSuccess_ReturnsState()
+    {
+        var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                """{"ipAddress":"192.168.1.50","isPoweredOn":true,"volume":27}""",
+                Encoding.UTF8, "application/json"),
+        });
+
+        var state = await client.GetStateAsync("192.168.1.50");
+
+        Assert.Equal("192.168.1.50", state.IpAddress);
+        Assert.True(state.IsPoweredOn);
+        Assert.Equal(27, state.Volume);
+    }
+
+    [Fact]
+    public async Task GetStateAsync_WhenProblemDetails_ThrowsWithDetail()
+    {
+        var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.BadGateway)
+        {
+            Content = new StringContent(
+                """{"title":"Device communication error","detail":"Could not reach the device.","status":502}""",
+                Encoding.UTF8, "application/problem+json"),
+        });
+
+        var exception = await Assert.ThrowsAsync<ControlApiException>(
+            () => client.GetStateAsync("192.168.1.50"));
+
+        Assert.Equal(502, exception.StatusCode);
+        Assert.Equal("Could not reach the device.", exception.Message);
+    }
 }
