@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/libs/" />
+  <Folder Name="/libs/Onkyo.eISCP/">
+    <Project Path="libs/Onkyo.eISCP/Onkyo.eISCP/Onkyo.eISCP.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/OnkyoIn.Control/OnkyoIn.Control.csproj" />
+    <Project Path="src/OnkyoIn.Web/OnkyoIn.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OnkyoIn.Control.Tests/OnkyoIn.Control.Tests.csproj" />
+    <Project Path="tests/OnkyoIn.Web.Tests/OnkyoIn.Web.Tests.csproj" />
+  </Folder>
+</Solution>

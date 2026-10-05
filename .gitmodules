@@ -1,0 +1,3 @@
+[submodule "libs/Onkyo.eISCP"]
+	path = libs/Onkyo.eISCP
+	url = https://github.com/lolochristen/Onkyo.eISCP.git

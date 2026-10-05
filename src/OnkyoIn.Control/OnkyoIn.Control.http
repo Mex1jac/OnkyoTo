@@ -1,0 +1,6 @@
+@OnkyoIn.Control_HostAddress = http://localhost:5047
+
+GET {{OnkyoIn.Control_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

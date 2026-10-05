@@ -1,0 +1,27 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## Test results
+TestResults/
+coverage/
+
+## Node / React (OnkyoIn.Web frontend)
+node_modules/
+dist/
+.vite/
+
+## Environment / secrets (never commit)
+.env
+.env.*
+appsettings.Production.json
+appsettings.Local.json
+
+## IDE / OS
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
