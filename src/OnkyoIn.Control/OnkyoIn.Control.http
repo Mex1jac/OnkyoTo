@@ -1,6 +1,33 @@
 @OnkyoIn.Control_HostAddress = http://localhost:5047
 
-GET {{OnkyoIn.Control_HostAddress}}/weatherforecast/
+### Discover an Onkyo device on the network
+GET {{OnkyoIn.Control_HostAddress}}/api/device/discover
 Accept: application/json
 
-###
+### Read the current device state (power and volume)
+GET {{OnkyoIn.Control_HostAddress}}/api/device/state?ipAddress=192.168.1.100
+Accept: application/json
+
+### Power on the device
+POST {{OnkyoIn.Control_HostAddress}}/api/device/power-on
+Content-Type: application/json
+
+{
+  "ipAddress": "192.168.1.100"
+}
+
+### Raise the volume
+POST {{OnkyoIn.Control_HostAddress}}/api/device/volume/up
+Content-Type: application/json
+
+{
+  "ipAddress": "192.168.1.100"
+}
+
+### Lower the volume
+POST {{OnkyoIn.Control_HostAddress}}/api/device/volume/down
+Content-Type: application/json
+
+{
+  "ipAddress": "192.168.1.100"
+}
