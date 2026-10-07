@@ -3,6 +3,7 @@ using OnkyoIn.Control.Domain.Gateways;
 using OnkyoIn.Control.Infrastructure.Configuration;
 using OnkyoIn.Control.Infrastructure.ErrorHandling;
 using OnkyoIn.Control.Infrastructure.Onkyo;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +47,12 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// The Onkyo.eISCP library reports recoverable socket errors via Trace.Fail,
+// which the default trace listener turns into a process-killing assertion.
+// Replace it with one that logs instead, so transient disconnects cannot crash the API.
+Trace.Listeners.Clear();
+Trace.Listeners.Add(new OnkyoTraceListener(app.Logger));
 
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();

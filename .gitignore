@@ -13,6 +13,8 @@ coverage/
 node_modules/
 dist/
 .vite/
+# Stray lockfile generated in the backend project folder; the real one lives in ClientApp/
+src/OnkyoIn.Web/package-lock.json
 
 ## Environment / secrets (never commit)
 .env

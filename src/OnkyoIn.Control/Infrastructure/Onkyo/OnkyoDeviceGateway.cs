@@ -15,6 +15,14 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
 {
     private const int DefaultPort = 60128;
 
+    /// <summary>
+    /// Time to wait for the power-on acknowledgement. Receivers coming out of
+    /// standby can take well over the library's 2000 ms default before they
+    /// report <c>PWR01</c> (measured ~2.5 s on a real device), which used to
+    /// surface as a timeout even though the device did power on.
+    /// </summary>
+    public const int PowerOnTimeoutMs = 6000;
+
     public async Task<string> DiscoverAsync(CancellationToken cancellationToken = default)
     {
         List<ReceiverInfo> receivers;
@@ -54,7 +62,17 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
     }
 
     public Task PowerOnAsync(string ipAddress, CancellationToken cancellationToken = default)
-        => SendAsync(ipAddress, async receiver => { await receiver.PowerOnAsync(Zone.Main); return true; });
+        => SendAsync(ipAddress, async receiver =>
+        {
+            await PowerOnExecutor.ExecuteAsync(
+                sendPowerOn: () => receiver.SendCommandAsync(
+                    new Power(Zone.Main) { SystemOn = true },
+                    PowerOnTimeoutMs),
+                isPoweredOn: async () =>
+                    (await receiver.GetPowerStatusAsync(Zone.Main))?.SystemOn == true);
+
+            return true;
+        });
 
     public Task VolumeUpAsync(string ipAddress, CancellationToken cancellationToken = default)
         => SendAsync(ipAddress, async receiver => { await receiver.SetVolumeUpAsync(Zone.Main); return true; });

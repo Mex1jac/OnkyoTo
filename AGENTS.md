@@ -71,6 +71,8 @@
 | 8 | Consultar estado del dispositivo (encendido, volumen actual) | Media | Hecho | `GET /api/device/state` |
 | 9 | Configurar appsettings por entorno y CORS estricto | Baja | Hecho | `Cors:AllowedOrigins` por entorno |
 | 10 | Integrar el submódulo al clonar (`git submodule update --init`) | Media | Hecho | Documentado en README |
+| 11 | Revisar porque el comando power on enciende el aparato con exito pero devuelve error de time out | Alta | Hecho | Timeout subido a 6s + verificación de estado |
+
 
 ## 9. Notas y decisiones
 - Se usa **DDD en carpetas** dentro de 2 proyectos (no un proyecto por capa) para mantenerlo simple, según decisión del usuario.
