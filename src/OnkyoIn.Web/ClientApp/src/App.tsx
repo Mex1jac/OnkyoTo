@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { discover, getState, powerOn, volumeUp, volumeDown, type DeviceState } from './api'
 import './App.css'
 
@@ -10,15 +10,28 @@ interface Feedback {
 }
 
 function App() {
-  const [ipAddress, setIpAddress] = useState('')
+  const [ipAddress, setIpAddress] = useState(
+    () => new URLSearchParams(window.location.search).get('ip') ?? '',
+  )
   const [state, setState] = useState<DeviceState | null>(null)
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [busy, setBusy] = useState(false)
 
+  // Keep the device IP in the URL so the state is deep-linkable and survives reloads.
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    if (ipAddress) {
+      url.searchParams.set('ip', ipAddress)
+    } else {
+      url.searchParams.delete('ip')
+    }
+    window.history.replaceState(null, '', url)
+  }, [ipAddress])
+
   // Runs an async action while showing status, and reports success or failure.
   async function run(label: string, action: () => Promise<void>) {
     setBusy(true)
-    setFeedback({ kind: 'info', text: `${label}...` })
+    setFeedback({ kind: 'info', text: `${label}…` })
     try {
       await action()
       setFeedback({ kind: 'success', text: `${label}: done` })
@@ -53,13 +66,16 @@ function App() {
         <label htmlFor="ip">Device IP</label>
         <input
           id="ip"
+          name="ipAddress"
           type="text"
           placeholder="192.168.1.100"
+          autoComplete="off"
+          spellCheck={false}
           value={ipAddress}
           onChange={(event) => setIpAddress(event.target.value)}
         />
         <button onClick={handleDiscover} disabled={busy}>
-          Discover device
+          Discover Device
         </button>
       </section>
 
@@ -74,7 +90,7 @@ function App() {
           Volume −
         </button>
         <button onClick={handleRefreshState} disabled={busy || !hasDevice}>
-          Refresh state
+          Refresh State
         </button>
       </section>
 

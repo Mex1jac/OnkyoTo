@@ -2,8 +2,7 @@
   max-width: 480px;
   margin: 4rem auto;
   padding: 2rem;
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  color: #213547;
+  color: var(--text-h);
 }
 
 h1 {
@@ -12,7 +11,7 @@ h1 {
 
 .subtitle {
   margin-top: 0;
-  color: #6b7280;
+  color: var(--text);
 }
 
 .panel {
@@ -30,8 +29,10 @@ h1 {
 input {
   padding: 0.6rem 0.75rem;
   font-size: 1rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border);
   border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
 }
 
 button {
@@ -39,19 +40,26 @@ button {
   font-size: 1rem;
   border: none;
   border-radius: 8px;
-  background-color: #1f2937;
-  color: #fff;
+  background-color: var(--text-h);
+  color: var(--bg);
   cursor: pointer;
-  transition: background-color 0.2s;
+  touch-action: manipulation;
+  transition: opacity 0.2s;
 }
 
 button:hover:not(:disabled) {
-  background-color: #374151;
+  opacity: 0.85;
 }
 
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+input:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .controls {
@@ -65,7 +73,7 @@ button:disabled {
 }
 
 .status.info {
-  color: #2563eb;
+  color: var(--accent);
 }
 
 .status.success {
@@ -80,22 +88,23 @@ button:disabled {
   flex-direction: row;
   gap: 2rem;
   padding: 1rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background-color: #f9fafb;
+  background: var(--social-bg);
 }
 
 .state-item {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  min-w: 0;
 }
 
 .state-label {
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #6b7280;
+  color: var(--text);
 }
 
 .state-value {
@@ -108,5 +117,5 @@ button:disabled {
 }
 
 .state-value.off {
-  color: #9ca3af;
+  color: var(--text);
 }
