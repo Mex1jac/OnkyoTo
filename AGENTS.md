@@ -79,6 +79,7 @@
 | 16 | Cambiar el codigo para que el mismo boton de encendido tambien funcione para apagarlo | Alto | Hecho | `POST /api/device/power/toggle` (lee `PWRQSTN` y envía `PWR01`/`PWR00`); botón toggle en la SPA |
 | 17 | El cambio a la fuente BD/DVD no funciona | Alto | Hecho | Causa: `SLI00` es VIDEO1/STB; ahora `SLI10` (verificar en dispositivo) |
 | 18 | El cambio a la fuente STRM BOX no funciona | Alto | Hecho | Causa: `SLI0A` no existe en el set clásico; ahora `SLI11` (verificar en dispositivo) |
+| 19 | Refrescar el estado automaticamente y quitar el boton de Refresh State | Media | Hecho | La SPA recarga el estado tras cada cambio (fuente, volumen, encendido) y al poner la IP; boton eliminado |
 
 
 ## 9. Notas y decisiones

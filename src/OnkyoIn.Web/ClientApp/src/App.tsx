@@ -60,10 +60,9 @@ function App() {
     })
   }
 
-  function handleRefreshState() {
-    run('Reading device state', async () => {
-      setState(await getState(ipAddress))
-    })
+  // Re-reads the device state without showing user-facing feedback.
+  async function refreshState() {
+    setState(await getState(ipAddress))
   }
 
   function handlePowerToggle() {
@@ -72,14 +71,24 @@ function App() {
     })
   }
 
-  // Load the available sources whenever a device IP is set (also from the URL).
+  // Load the device state and the available sources whenever a device IP is set
+  // (also from the URL), so the panels are populated without a manual refresh.
   useEffect(() => {
     if (!ipAddress.trim()) {
       setSources([])
+      setState(null)
       return
     }
 
     let cancelled = false
+    getState(ipAddress)
+      .then((deviceState) => {
+        if (!cancelled) setState(deviceState)
+      })
+      .catch(() => {
+        // The device may be unreachable; keep the previous state.
+      })
+
     getInputs(ipAddress)
       .then((list) => {
         if (!cancelled) setSources(list)
@@ -97,6 +106,7 @@ function App() {
     const inputId = event.target.value
     run('Switching source', async () => {
       await setInput(ipAddress, inputId)
+      await refreshState()
       setSources(await getInputs(ipAddress))
     })
   }
@@ -149,14 +159,27 @@ function App() {
         <button onClick={handlePowerToggle} disabled={busy || !hasDevice}>
           {isPoweredOn ? 'Power Off' : 'Power On'}
         </button>
-        <button onClick={() => run('Volume up', () => volumeUp(ipAddress))} disabled={busy || !hasDevice}>
+        <button
+          onClick={() =>
+            run('Volume up', async () => {
+              await volumeUp(ipAddress)
+              await refreshState()
+            })
+          }
+          disabled={busy || !hasDevice}
+        >
           Volume +
         </button>
-        <button onClick={() => run('Volume down', () => volumeDown(ipAddress))} disabled={busy || !hasDevice}>
+        <button
+          onClick={() =>
+            run('Volume down', async () => {
+              await volumeDown(ipAddress)
+              await refreshState()
+            })
+          }
+          disabled={busy || !hasDevice}
+        >
           Volume −
-        </button>
-        <button onClick={handleRefreshState} disabled={busy || !hasDevice}>
-          Refresh State
         </button>
       </section>
 
