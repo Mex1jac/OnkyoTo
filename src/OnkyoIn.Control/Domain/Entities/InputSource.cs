@@ -29,8 +29,8 @@ public static class InputSourceCatalog
         new InputSource("tv", "TV", "12"),
         new InputSource("phono", "PHONO", "22"),
         new InputSource("cd", "CD", "23"),
-        new InputSource("am", "AM Tuner", "24"),
-        new InputSource("fm", "FM Tuner", "25"),
+        new InputSource("am", "AM Tuner", "25"),
+        new InputSource("fm", "FM Tuner", "24"),
         new InputSource("network", "NET (Network/AirPlay)", "2B"),
         new InputSource("bluetooth", "Bluetooth", "2E"),
     };

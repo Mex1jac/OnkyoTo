@@ -20,8 +20,8 @@ public class InputSourceCatalogTests
     [InlineData("tv", "12")]
     [InlineData("phono", "22")]
     [InlineData("cd", "23")]
-    [InlineData("am", "24")]
-    [InlineData("fm", "25")]
+    [InlineData("am", "25")]
+    [InlineData("fm", "24")]
     [InlineData("network", "2B")]
     [InlineData("bluetooth", "2E")]
     public void FindById_ReturnsSourceWithExpectedSliCode(string id, string sliCode)
