@@ -22,6 +22,9 @@ public interface IOnkyoDeviceGateway
 
     Task PowerOnAsync(string ipAddress, CancellationToken cancellationToken = default);
 
+    /// <summary>Toggles the power state of a device and returns the new state.</summary>
+    Task<DeviceState> PowerToggleAsync(string ipAddress, CancellationToken cancellationToken = default);
+
     Task VolumeUpAsync(string ipAddress, CancellationToken cancellationToken = default);
 
     Task VolumeDownAsync(string ipAddress, CancellationToken cancellationToken = default);

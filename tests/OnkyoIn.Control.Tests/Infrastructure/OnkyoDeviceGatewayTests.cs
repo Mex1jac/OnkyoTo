@@ -75,11 +75,23 @@ public class OnkyoDeviceGatewayTests
     }
 
     [Fact]
-    public async Task SetInputAsync_WithUnreachableIp_ThrowsDeviceCommunicationException()
+    public async Task PowerToggleAsync_WithEmptyIp_ThrowsArgumentException()
     {
         var gateway = new OnkyoDeviceGateway();
 
-        await Assert.ThrowsAsync<DeviceCommunicationException>(
-            () => gateway.SetInputAsync("127.0.0.1", "cd"));
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => gateway.PowerToggleAsync("  "));
+    }
+
+    [Fact]
+    public async Task PowerToggleAsync_WithUnreachableIp_ThrowsDeviceCommunicationException()
+    {
+        var gateway = new OnkyoDeviceGateway();
+
+        // Localhost has no eISCP listener, so the connection is refused immediately.
+        var exception = await Assert.ThrowsAsync<DeviceCommunicationException>(
+            () => gateway.PowerToggleAsync("127.0.0.1"));
+
+        Assert.Contains("127.0.0.1", exception.Message);
     }
 }

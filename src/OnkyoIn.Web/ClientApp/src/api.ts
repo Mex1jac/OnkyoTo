@@ -91,6 +91,11 @@ function post(path: string, body: unknown): Promise<Response> {
   })
 }
 
+export async function powerToggle(ipAddress: string): Promise<DeviceState> {
+  const response = await post('/api/device/power/toggle', { ipAddress })
+  return (await response.json()) as DeviceState
+}
+
 export const powerOn = (ipAddress: string) => post('/api/device/power-on', { ipAddress }).then(() => undefined)
 export const volumeUp = (ipAddress: string) => post('/api/device/volume/up', { ipAddress }).then(() => undefined)
 export const volumeDown = (ipAddress: string) => post('/api/device/volume/down', { ipAddress }).then(() => undefined)

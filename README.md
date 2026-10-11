@@ -100,6 +100,7 @@ Disponibles tanto en `OnkyoIn.Control` como en `OnkyoIn.Web` (Web los reenvía):
 | `GET` | `/api/device/state?ipAddress={ip}` | Lee estado (encendido, volumen y fuente actual) |
 | `GET` | `/api/device/inputs?ipAddress={ip}` | Lista las fuentes disponibles y marca la actual |
 | `POST` | `/api/device/power-on` | Enciende el dispositivo |
+| `POST` | `/api/device/power/toggle` | Alterna el encendido y devuelve el nuevo estado |
 | `POST` | `/api/device/input` | Cambia la fuente de entrada |
 | `POST` | `/api/device/volume/up` | Sube el volumen |
 | `POST` | `/api/device/volume/down` | Baja el volumen |

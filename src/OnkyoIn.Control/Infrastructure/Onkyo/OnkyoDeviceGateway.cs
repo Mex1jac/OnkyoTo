@@ -148,6 +148,38 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
             return true;
         });
 
+    public async Task<DeviceState> PowerToggleAsync(string ipAddress, CancellationToken cancellationToken = default)
+    {
+        await SendAsync(ipAddress, async receiver =>
+        {
+            var powerStatus = await receiver.GetPowerStatusAsync(Zone.Main);
+
+            if (powerStatus?.SystemOn == true)
+            {
+                // Receivers acknowledge standby immediately.
+                await receiver.SendCommandAsync(
+                    new Power(Zone.Main) { SystemOn = false },
+                    PowerOnTimeoutMs);
+            }
+            else
+            {
+                // Power-on can take seconds to be acknowledged; verify
+                // the real state before surfacing an error.
+                await PowerOnExecutor.ExecuteAsync(
+                    sendPowerOn: () => receiver.SendCommandAsync(
+                        new Power(Zone.Main) { SystemOn = true },
+                        PowerOnTimeoutMs),
+                    isPoweredOn: async () =>
+                        (await receiver.GetPowerStatusAsync(Zone.Main))?.SystemOn == true);
+            }
+
+            return true;
+        });
+
+        // Return the fresh state so the UI reflects the change.
+        return await GetStateAsync(ipAddress, cancellationToken);
+    }
+
     public Task VolumeUpAsync(string ipAddress, CancellationToken cancellationToken = default)
         => SendAsync(ipAddress, async receiver =>
         {

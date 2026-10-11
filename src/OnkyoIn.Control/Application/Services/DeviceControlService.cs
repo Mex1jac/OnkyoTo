@@ -40,6 +40,13 @@ public class DeviceControlService
     public Task PowerOnAsync(DeviceCommandRequest request, CancellationToken cancellationToken = default)
         => _gateway.PowerOnAsync(request.IpAddress, cancellationToken);
 
+    public async Task<DeviceStateResponse> PowerToggleAsync(string ipAddress, CancellationToken cancellationToken = default)
+    {
+        var state = await _gateway.PowerToggleAsync(ipAddress, cancellationToken);
+        return new DeviceStateResponse(
+            ipAddress, state.IsPoweredOn, state.Volume, state.CurrentInputId, state.CurrentInputName);
+    }
+
     public Task SetInputAsync(SetInputRequest request, CancellationToken cancellationToken = default)
         => _gateway.SetInputAsync(request.IpAddress, request.InputId, cancellationToken);
 

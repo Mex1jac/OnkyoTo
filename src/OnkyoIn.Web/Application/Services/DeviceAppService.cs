@@ -31,6 +31,9 @@ public class DeviceAppService
     public Task PowerOnAsync(DeviceCommandRequest request, CancellationToken cancellationToken = default)
         => _controlClient.PowerOnAsync(request.IpAddress, cancellationToken);
 
+    public Task<DeviceState> PowerToggleAsync(string ipAddress, CancellationToken cancellationToken = default)
+        => _controlClient.PowerToggleAsync(ipAddress, cancellationToken);
+
     public Task SetInputAsync(SetInputRequest request, CancellationToken cancellationToken = default)
         => _controlClient.SetInputAsync(request.IpAddress, request.InputId, cancellationToken);
 

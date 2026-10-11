@@ -29,6 +29,14 @@ Content-Type: application/json
   "ipAddress": "192.168.1.100"
 }
 
+### Toggle the device power (returns the new state)
+POST {{OnkyoIn.Control_HostAddress}}/api/device/power/toggle
+Content-Type: application/json
+
+{
+  "ipAddress": "192.168.1.100"
+}
+
 ### Raise the volume
 POST {{OnkyoIn.Control_HostAddress}}/api/device/volume/up
 Content-Type: application/json

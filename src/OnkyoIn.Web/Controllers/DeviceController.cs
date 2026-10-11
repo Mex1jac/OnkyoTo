@@ -64,6 +64,18 @@ public class DeviceController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Toggles the device power and returns the new state.</summary>
+    [HttpPost("power/toggle")]
+    public async Task<ActionResult<DeviceStateResponse>> PowerToggle(
+        DeviceCommandRequest request,
+        CancellationToken cancellationToken)
+    {
+        var state = await _deviceApp.PowerToggleAsync(request.IpAddress, cancellationToken);
+        return Ok(new DeviceStateResponse(
+            state.IpAddress, state.IsPoweredOn, state.Volume,
+            state.CurrentInputId, state.CurrentInputName));
+    }
+
     /// <summary>Raises the device volume.</summary>
     [HttpPost("volume/up")]
     public async Task<IActionResult> VolumeUp(DeviceCommandRequest request, CancellationToken cancellationToken)

@@ -3,7 +3,7 @@ import {
   discover,
   getState,
   getInputs,
-  powerOn,
+  powerToggle,
   setInput,
   volumeDown,
   volumeUp,
@@ -66,6 +66,12 @@ function App() {
     })
   }
 
+  function handlePowerToggle() {
+    run(isPoweredOn ? 'Powering off' : 'Powering on', async () => {
+      setState(await powerToggle(ipAddress))
+    })
+  }
+
   // Load the available sources whenever a device IP is set (also from the URL).
   useEffect(() => {
     if (!ipAddress.trim()) {
@@ -96,6 +102,7 @@ function App() {
   }
 
   const hasDevice = ipAddress.trim().length > 0
+  const isPoweredOn = state?.isPoweredOn ?? false
   const currentInputId =
     sources.find((source) => source.isCurrent)?.id ?? state?.currentInputId ?? ''
 
@@ -139,8 +146,8 @@ function App() {
       </section>
 
       <section className="panel controls">
-        <button onClick={() => run('Power on', () => powerOn(ipAddress))} disabled={busy || !hasDevice}>
-          Power On
+        <button onClick={handlePowerToggle} disabled={busy || !hasDevice}>
+          {isPoweredOn ? 'Power Off' : 'Power On'}
         </button>
         <button onClick={() => run('Volume up', () => volumeUp(ipAddress))} disabled={busy || !hasDevice}>
           Volume +

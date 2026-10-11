@@ -69,6 +69,23 @@ public class OnkyoControlHttpClient : IOnkyoControlClient
     public Task PowerOnAsync(string ipAddress, CancellationToken cancellationToken = default)
         => PostAsync("api/device/power-on", new { ipAddress }, cancellationToken);
 
+    public async Task<DeviceState> PowerToggleAsync(string ipAddress, CancellationToken cancellationToken = default)
+    {
+        var response = await SendAsync(
+            () => _httpClient.PostAsJsonAsync("api/device/power/toggle", new { ipAddress }, cancellationToken),
+            cancellationToken);
+
+        var payload = await ReadAsync<ControlStateResponse>(response, cancellationToken);
+
+        return payload is null
+            ? throw new ControlApiException(
+                (int)response.StatusCode,
+                "The control API did not return the device state.")
+            : new DeviceState(
+                payload.IpAddress, payload.IsPoweredOn, payload.Volume,
+                payload.CurrentInputId, payload.CurrentInputName);
+    }
+
     public Task SetInputAsync(string ipAddress, string inputId, CancellationToken cancellationToken = default)
         => PostAsync("api/device/input", new { ipAddress, inputId }, cancellationToken);
 

@@ -16,6 +16,8 @@ public interface IOnkyoControlClient
 
     Task PowerOnAsync(string ipAddress, CancellationToken cancellationToken = default);
 
+    Task<DeviceState> PowerToggleAsync(string ipAddress, CancellationToken cancellationToken = default);
+
     Task SetInputAsync(string ipAddress, string inputId, CancellationToken cancellationToken = default);
 
     Task VolumeUpAsync(string ipAddress, CancellationToken cancellationToken = default);

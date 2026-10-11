@@ -10,6 +10,7 @@ public class DeviceAppServiceTests
     {
         public string? DiscoveredIp { get; set; } = "192.168.1.50";
         public DeviceState State { get; set; } = new("192.168.1.50", true, 20);
+        public DeviceState ToggleState { get; set; } = new("192.168.1.50", false, 20);
         public IReadOnlyList<InputSourceResponse> Inputs { get; set; } =
             Array.Empty<InputSourceResponse>();
         public string? LastIp { get; private set; }
@@ -39,6 +40,13 @@ public class DeviceAppServiceTests
             LastIp = ipAddress;
             LastCommand = "power-on";
             return Task.CompletedTask;
+        }
+
+        public Task<DeviceState> PowerToggleAsync(string ipAddress, CancellationToken cancellationToken = default)
+        {
+            LastIp = ipAddress;
+            LastCommand = "power-toggle";
+            return Task.FromResult(ToggleState);
         }
 
         public Task SetInputAsync(string ipAddress, string inputId, CancellationToken cancellationToken = default)
@@ -131,6 +139,24 @@ public class DeviceAppServiceTests
         Assert.Equal("10.0.0.9", client.LastIp);
         Assert.Equal("network", client.LastInputId);
         Assert.Equal("set-input", client.LastCommand);
+    }
+
+    [Fact]
+    public async Task PowerToggleAsync_ReturnsNewStateFromControlApi()
+    {
+        var client = new FakeControlClient
+        {
+            ToggleState = new DeviceState("10.0.0.9", true, 25, "tv", "TV"),
+        };
+        var service = new DeviceAppService(client);
+
+        var result = await service.PowerToggleAsync("10.0.0.9");
+
+        Assert.Equal("10.0.0.9", result.IpAddress);
+        Assert.True(result.IsPoweredOn);
+        Assert.Equal(25, result.Volume);
+        Assert.Equal("tv", result.CurrentInputId);
+        Assert.Equal("power-toggle", client.LastCommand);
     }
 
     [Fact]
