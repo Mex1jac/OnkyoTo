@@ -1,5 +1,15 @@
-import { useEffect, useState } from 'react'
-import { discover, getState, powerOn, volumeUp, volumeDown, type DeviceState } from './api'
+import { useEffect, useState, type ChangeEvent } from 'react'
+import {
+  discover,
+  getState,
+  getInputs,
+  powerOn,
+  setInput,
+  volumeDown,
+  volumeUp,
+  type DeviceState,
+  type InputSource,
+} from './api'
 import './App.css'
 
 type MessageKind = 'info' | 'success' | 'error'
@@ -14,6 +24,7 @@ function App() {
     () => new URLSearchParams(window.location.search).get('ip') ?? '',
   )
   const [state, setState] = useState<DeviceState | null>(null)
+  const [sources, setSources] = useState<InputSource[]>([])
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -55,7 +66,38 @@ function App() {
     })
   }
 
+  // Load the available sources whenever a device IP is set (also from the URL).
+  useEffect(() => {
+    if (!ipAddress.trim()) {
+      setSources([])
+      return
+    }
+
+    let cancelled = false
+    getInputs(ipAddress)
+      .then((list) => {
+        if (!cancelled) setSources(list)
+      })
+      .catch(() => {
+        if (!cancelled) setSources([])
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [ipAddress])
+
+  function handleSelectSource(event: ChangeEvent<HTMLSelectElement>) {
+    const inputId = event.target.value
+    run('Switching source', async () => {
+      await setInput(ipAddress, inputId)
+      setSources(await getInputs(ipAddress))
+    })
+  }
+
   const hasDevice = ipAddress.trim().length > 0
+  const currentInputId =
+    sources.find((source) => source.isCurrent)?.id ?? state?.currentInputId ?? ''
 
   return (
     <main className="container">
@@ -77,6 +119,23 @@ function App() {
         <button onClick={handleDiscover} disabled={busy}>
           Discover Device
         </button>
+      </section>
+
+      <section className="panel">
+        <label htmlFor="source">Source</label>
+        <select
+          id="source"
+          value={currentInputId}
+          disabled={busy || !hasDevice || sources.length === 0}
+          onChange={handleSelectSource}
+        >
+          {sources.length === 0 && <option value="">No sources available</option>}
+          {sources.map((source) => (
+            <option key={source.id} value={source.id}>
+              {source.name}
+            </option>
+          ))}
+        </select>
       </section>
 
       <section className="panel controls">
@@ -105,6 +164,10 @@ function App() {
           <div className="state-item">
             <span className="state-label">Volume</span>
             <span className="state-value">{state.volume}</span>
+          </div>
+          <div className="state-item">
+            <span className="state-label">Source</span>
+            <span className="state-value">{state.currentInputName ?? '—'}</span>
           </div>
         </section>
       )}

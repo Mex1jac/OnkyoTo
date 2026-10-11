@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using OnkyoIn.Web.Application.Dtos;
 using OnkyoIn.Web.Domain.Exceptions;
 using OnkyoIn.Web.Domain.Gateways;
 
@@ -46,22 +47,41 @@ public class OnkyoControlHttpClient : IOnkyoControlClient
             ? throw new ControlApiException(
                 (int)response.StatusCode,
                 "The control API did not return the device state.")
-            : new DeviceState(payload.IpAddress, payload.IsPoweredOn, payload.Volume);
+            : new DeviceState(
+                payload.IpAddress, payload.IsPoweredOn, payload.Volume,
+                payload.CurrentInputId, payload.CurrentInputName);
+    }
+
+    public async Task<IReadOnlyList<InputSourceResponse>> GetInputsAsync(string ipAddress, CancellationToken cancellationToken = default)
+    {
+        var url = $"api/device/inputs?ipAddress={Uri.EscapeDataString(ipAddress)}";
+        var response = await SendAsync(
+            () => _httpClient.GetAsync(url, cancellationToken),
+            cancellationToken);
+
+        var payload = await ReadAsync<ControlInputSourceResponse[]>(response, cancellationToken);
+
+        return (payload ?? Array.Empty<ControlInputSourceResponse>())
+            .Select(source => new InputSourceResponse(source.Id, source.Name, source.IsCurrent))
+            .ToList();
     }
 
     public Task PowerOnAsync(string ipAddress, CancellationToken cancellationToken = default)
-        => PostAsync("api/device/power-on", ipAddress, cancellationToken);
+        => PostAsync("api/device/power-on", new { ipAddress }, cancellationToken);
+
+    public Task SetInputAsync(string ipAddress, string inputId, CancellationToken cancellationToken = default)
+        => PostAsync("api/device/input", new { ipAddress, inputId }, cancellationToken);
 
     public Task VolumeUpAsync(string ipAddress, CancellationToken cancellationToken = default)
-        => PostAsync("api/device/volume/up", ipAddress, cancellationToken);
+        => PostAsync("api/device/volume/up", new { ipAddress }, cancellationToken);
 
     public Task VolumeDownAsync(string ipAddress, CancellationToken cancellationToken = default)
-        => PostAsync("api/device/volume/down", ipAddress, cancellationToken);
+        => PostAsync("api/device/volume/down", new { ipAddress }, cancellationToken);
 
-    private async Task PostAsync(string path, string ipAddress, CancellationToken cancellationToken)
+    private async Task PostAsync(string path, object body, CancellationToken cancellationToken)
     {
         var response = await SendAsync(
-            () => _httpClient.PostAsJsonAsync(path, new { ipAddress }, cancellationToken),
+            () => _httpClient.PostAsJsonAsync(path, body, cancellationToken),
             cancellationToken);
 
         // Any 2xx/3xx response means the command was accepted.
@@ -128,7 +148,14 @@ public class OnkyoControlHttpClient : IOnkyoControlClient
 
     private sealed record ControlDiscoverResponse(string IpAddress);
 
-    private sealed record ControlStateResponse(string IpAddress, bool IsPoweredOn, int Volume);
+    private sealed record ControlStateResponse(
+        string IpAddress,
+        bool IsPoweredOn,
+        int Volume,
+        string? CurrentInputId,
+        string? CurrentInputName);
+
+    private sealed record ControlInputSourceResponse(string Id, string Name, bool IsCurrent);
 
     private sealed record ProblemResponse(string? Title, string? Detail, int? Status);
 }

@@ -48,17 +48,75 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
 
     public async Task<DeviceState> GetStateAsync(string ipAddress, CancellationToken cancellationToken = default)
     {
-        var (power, volume) = await SendAsync(ipAddress, async receiver =>
+        var (power, volume, input) = await SendAsync(ipAddress, async receiver =>
         {
             var powerStatus = await receiver.GetPowerStatusAsync(Zone.Main);
             var volumeStatus = await receiver.GetVolumeAsync(Zone.Main);
-            return (powerStatus, volumeStatus);
+            var inputStatus = await TryGetInputAsync(receiver);
+            return (powerStatus, volumeStatus, inputStatus);
         });
 
         // The library returns -1 for the volume when the value is "N/A".
         var volumeLevel = volume.VolumeLevel < 0 ? 0 : volume.VolumeLevel;
+        var currentInput = InputSourceCatalog.FindBySliCode(input?.RawData);
 
-        return new DeviceState(power.SystemOn, volumeLevel);
+        return new DeviceState(
+            power.SystemOn,
+            volumeLevel,
+            currentInput?.Id,
+            currentInput?.Name);
+    }
+
+    public async Task<DeviceInputs> GetInputsAsync(string ipAddress, CancellationToken cancellationToken = default)
+    {
+        var current = await SendAsync(
+            ipAddress,
+            receiver => receiver.GetInputAsync(Zone.Main));
+
+        var sources = new List<InputSource>(InputSourceCatalog.Sources);
+        var currentSource = InputSourceCatalog.FindBySliCode(current.RawData);
+
+        // The receiver reported an input that is not part of the known
+        // catalog (e.g. an HDMI input). Include it so the UI can still
+        // show which source is active.
+        if (currentSource is null && !string.IsNullOrEmpty(current.RawData))
+        {
+            currentSource = new InputSource(
+                $"unknown-{current.RawData}",
+                $"Unknown ({current.RawData})",
+                current.RawData);
+            sources.Add(currentSource);
+        }
+
+        return new DeviceInputs(sources, currentSource);
+    }
+
+    public Task SetInputAsync(string ipAddress, string inputId, CancellationToken cancellationToken = default)
+    {
+        var source = InputSourceCatalog.FindById(inputId)
+            ?? throw new ArgumentException($"Unknown input source '{inputId}'.", nameof(inputId));
+
+        return SendAsync(ipAddress, async receiver =>
+        {
+            try
+            {
+                await receiver.SendCommandAsync<Input>(
+                    new Input(Zone.Main) { RawData = source.SliCode });
+            }
+            catch (TimeoutException)
+            {
+                // Some receivers acknowledge the switch with a delay; the
+                // real input is verified below before surfacing an error
+                // (same policy as power-on).
+            }
+
+            var current = await receiver.GetInputAsync(Zone.Main);
+            if (!string.Equals(current.RawData, source.SliCode, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new DeviceCommunicationException(
+                    $"The device did not switch to '{source.Name}'.");
+            }
+        });
     }
 
     public Task PowerOnAsync(string ipAddress, CancellationToken cancellationToken = default)
@@ -79,6 +137,20 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
 
     public Task VolumeDownAsync(string ipAddress, CancellationToken cancellationToken = default)
         => SendAsync(ipAddress, async receiver => { await receiver.SetVolumeDownAsync(Zone.Main); return true; });
+
+    // Receivers in standby often do not answer input queries; the
+    // input is optional information in the state response.
+    private static async Task<Input?> TryGetInputAsync(Receiver receiver)
+    {
+        try
+        {
+            return await receiver.GetInputAsync(Zone.Main);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return null;
+        }
+    }
 
     private static Task SendAsync(string ipAddress, Func<Receiver, Task> command)
         => SendAsync(ipAddress, async receiver => { await command(receiver); return true; });

@@ -36,11 +36,29 @@ public class DeviceController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Reads the input sources available on the device.</summary>
+    [HttpGet("inputs")]
+    public async Task<ActionResult<IReadOnlyList<InputSourceResponse>>> GetInputs(
+        [FromQuery] string ipAddress,
+        CancellationToken cancellationToken)
+    {
+        var result = await _deviceControl.GetInputsAsync(ipAddress, cancellationToken);
+        return Ok(result);
+    }
+
     /// <summary>Sends the power-on command to the device.</summary>
     [HttpPost("power-on")]
     public async Task<IActionResult> PowerOn(DeviceCommandRequest request, CancellationToken cancellationToken)
     {
         await _deviceControl.PowerOnAsync(request, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>Selects an input source on the device.</summary>
+    [HttpPost("input")]
+    public async Task<IActionResult> SetInput(SetInputRequest request, CancellationToken cancellationToken)
+    {
+        await _deviceControl.SetInputAsync(request, cancellationToken);
         return NoContent();
     }
 

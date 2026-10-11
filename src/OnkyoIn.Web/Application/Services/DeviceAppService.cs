@@ -25,8 +25,14 @@ public class DeviceAppService
     public Task<DeviceState> GetStateAsync(string ipAddress, CancellationToken cancellationToken = default)
         => _controlClient.GetStateAsync(ipAddress, cancellationToken);
 
+    public Task<IReadOnlyList<InputSourceResponse>> GetInputsAsync(string ipAddress, CancellationToken cancellationToken = default)
+        => _controlClient.GetInputsAsync(ipAddress, cancellationToken);
+
     public Task PowerOnAsync(DeviceCommandRequest request, CancellationToken cancellationToken = default)
         => _controlClient.PowerOnAsync(request.IpAddress, cancellationToken);
+
+    public Task SetInputAsync(SetInputRequest request, CancellationToken cancellationToken = default)
+        => _controlClient.SetInputAsync(request.IpAddress, request.InputId, cancellationToken);
 
     public Task VolumeUpAsync(DeviceCommandRequest request, CancellationToken cancellationToken = default)
         => _controlClient.VolumeUpAsync(request.IpAddress, cancellationToken);

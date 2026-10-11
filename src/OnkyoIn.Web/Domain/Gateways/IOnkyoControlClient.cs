@@ -1,3 +1,5 @@
+using OnkyoIn.Web.Application.Dtos;
+
 namespace OnkyoIn.Web.Domain.Gateways;
 
 /// <summary>
@@ -10,7 +12,11 @@ public interface IOnkyoControlClient
 
     Task<DeviceState> GetStateAsync(string ipAddress, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<InputSourceResponse>> GetInputsAsync(string ipAddress, CancellationToken cancellationToken = default);
+
     Task PowerOnAsync(string ipAddress, CancellationToken cancellationToken = default);
+
+    Task SetInputAsync(string ipAddress, string inputId, CancellationToken cancellationToken = default);
 
     Task VolumeUpAsync(string ipAddress, CancellationToken cancellationToken = default);
 
@@ -18,4 +24,9 @@ public interface IOnkyoControlClient
 }
 
 /// <summary>Read-only snapshot of a device's state as returned by the control API.</summary>
-public record DeviceState(string IpAddress, bool IsPoweredOn, int Volume);
+public record DeviceState(
+    string IpAddress,
+    bool IsPoweredOn,
+    int Volume,
+    string? CurrentInputId = null,
+    string? CurrentInputName = null);

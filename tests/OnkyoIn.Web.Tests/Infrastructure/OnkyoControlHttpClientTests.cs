@@ -92,7 +92,7 @@ public class OnkyoControlHttpClientTests
         var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent(
-                """{"ipAddress":"192.168.1.50","isPoweredOn":true,"volume":27}""",
+                """{"ipAddress":"192.168.1.50","isPoweredOn":true,"volume":27,"currentInputId":"cd","currentInputName":"CD"}""",
                 Encoding.UTF8, "application/json"),
         });
 
@@ -101,6 +101,69 @@ public class OnkyoControlHttpClientTests
         Assert.Equal("192.168.1.50", state.IpAddress);
         Assert.True(state.IsPoweredOn);
         Assert.Equal(27, state.Volume);
+        Assert.Equal("cd", state.CurrentInputId);
+        Assert.Equal("CD", state.CurrentInputName);
+    }
+
+    [Fact]
+    public async Task GetInputsAsync_WhenSuccess_ReturnsSources()
+    {
+        var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                """[{"id":"cd","name":"CD","isCurrent":true},{"id":"fm","name":"FM Tuner","isCurrent":false}]""",
+                Encoding.UTF8, "application/json"),
+        });
+
+        var sources = await client.GetInputsAsync("192.168.1.50");
+
+        Assert.Equal(2, sources.Count);
+        Assert.Equal("cd", sources[0].Id);
+        Assert.True(sources[0].IsCurrent);
+        Assert.Equal("fm", sources[1].Id);
+        Assert.False(sources[1].IsCurrent);
+    }
+
+    [Fact]
+    public async Task GetInputsAsync_WhenProblemDetails_ThrowsWithDetail()
+    {
+        var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.BadGateway)
+        {
+            Content = new StringContent(
+                """{"title":"Device communication error","detail":"Could not reach the device.","status":502}""",
+                Encoding.UTF8, "application/problem+json"),
+        });
+
+        var exception = await Assert.ThrowsAsync<ControlApiException>(
+            () => client.GetInputsAsync("192.168.1.50"));
+
+        Assert.Equal(502, exception.StatusCode);
+        Assert.Equal("Could not reach the device.", exception.Message);
+    }
+
+    [Fact]
+    public async Task SetInputAsync_WhenSuccess_DoesNotThrow()
+    {
+        var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.NoContent));
+
+        await client.SetInputAsync("192.168.1.50", "cd");
+    }
+
+    [Fact]
+    public async Task SetInputAsync_WhenProblemDetails_ThrowsWithDetail()
+    {
+        var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent(
+                """{"title":"Invalid request","detail":"Unknown input source 'hdmi-arc'.","status":400}""",
+                Encoding.UTF8, "application/problem+json"),
+        });
+
+        var exception = await Assert.ThrowsAsync<ControlApiException>(
+            () => client.SetInputAsync("192.168.1.50", "hdmi-arc"));
+
+        Assert.Equal(400, exception.StatusCode);
+        Assert.Equal("Unknown input source 'hdmi-arc'.", exception.Message);
     }
 
     [Fact]

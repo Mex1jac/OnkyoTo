@@ -10,8 +10,11 @@ public class DeviceAppServiceTests
     {
         public string? DiscoveredIp { get; set; } = "192.168.1.50";
         public DeviceState State { get; set; } = new("192.168.1.50", true, 20);
+        public IReadOnlyList<InputSourceResponse> Inputs { get; set; } =
+            Array.Empty<InputSourceResponse>();
         public string? LastIp { get; private set; }
         public string? LastCommand { get; private set; }
+        public string? LastInputId { get; private set; }
 
         public Task<string> DiscoverAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(DiscoveredIp!);
@@ -23,10 +26,26 @@ public class DeviceAppServiceTests
             return Task.FromResult(State);
         }
 
+        public Task<IReadOnlyList<InputSourceResponse>> GetInputsAsync(
+            string ipAddress, CancellationToken cancellationToken = default)
+        {
+            LastIp = ipAddress;
+            LastCommand = "get-inputs";
+            return Task.FromResult(Inputs);
+        }
+
         public Task PowerOnAsync(string ipAddress, CancellationToken cancellationToken = default)
         {
             LastIp = ipAddress;
             LastCommand = "power-on";
+            return Task.CompletedTask;
+        }
+
+        public Task SetInputAsync(string ipAddress, string inputId, CancellationToken cancellationToken = default)
+        {
+            LastIp = ipAddress;
+            LastInputId = inputId;
+            LastCommand = "set-input";
             return Task.CompletedTask;
         }
 
@@ -66,6 +85,52 @@ public class DeviceAppServiceTests
         Assert.Equal("10.0.0.9", result.IpAddress);
         Assert.False(result.IsPoweredOn);
         Assert.Equal(42, result.Volume);
+    }
+
+    [Fact]
+    public async Task GetStateAsync_ReturnsCurrentInput()
+    {
+        var client = new FakeControlClient
+        {
+            State = new DeviceState("10.0.0.9", true, 20, "cd", "CD"),
+        };
+        var service = new DeviceAppService(client);
+
+        var result = await service.GetStateAsync("10.0.0.9");
+
+        Assert.Equal("cd", result.CurrentInputId);
+        Assert.Equal("CD", result.CurrentInputName);
+    }
+
+    [Fact]
+    public async Task GetInputsAsync_ReturnsSourcesFromControlApi()
+    {
+        var sources = new[]
+        {
+            new InputSourceResponse("cd", "CD", true),
+            new InputSourceResponse("fm", "FM Tuner", false),
+        };
+        var service = new DeviceAppService(new FakeControlClient { Inputs = sources });
+
+        var result = await service.GetInputsAsync("10.0.0.9");
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("cd", result[0].Id);
+        Assert.True(result[0].IsCurrent);
+        Assert.False(result[1].IsCurrent);
+    }
+
+    [Fact]
+    public async Task SetInputAsync_ForwardsIpAndInputId()
+    {
+        var client = new FakeControlClient();
+        var service = new DeviceAppService(client);
+
+        await service.SetInputAsync(new SetInputRequest("10.0.0.9", "network"));
+
+        Assert.Equal("10.0.0.9", client.LastIp);
+        Assert.Equal("network", client.LastInputId);
+        Assert.Equal("set-input", client.LastCommand);
     }
 
     [Fact]

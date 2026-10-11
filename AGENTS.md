@@ -72,6 +72,9 @@
 | 9 | Configurar appsettings por entorno y CORS estricto | Baja | Hecho | `Cors:AllowedOrigins` por entorno |
 | 10 | Integrar el submódulo al clonar (`git submodule update --init`) | Media | Hecho | Documentado en README |
 | 11 | Revisar porque el comando power on enciende el aparato con exito pero devuelve error de time out | Alta | Hecho | Timeout subido a 6s + verificación de estado |
+| 12 | El control de volumen baja el volumen al minimo en lugar de hacerlo por pasos | Alto | pendiente | Documentado en README |
+| 13 | El control de volumen sube el volumen no funciona | Alto | pendiente | Documentado en README |
+| 14 | Implementar el cambio de origen (fuente de entrada) | Alto | Hecho | `GET /api/device/inputs` (catálogo TX-NR6100 + actual vía `SLIQSTN`) y `POST /api/device/input` con verificación |
 
 
 ## 9. Notas y decisiones

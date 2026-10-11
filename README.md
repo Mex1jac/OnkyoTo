@@ -7,7 +7,8 @@ Aplicación para controlar receptores Onkyo (AVR) por red desde una página web.
 - **Descubrir** la IP del dispositivo Onkyo en la red local.
 - **Encender** el dispositivo.
 - **Subir** y **bajar** el volumen.
-- **Consultar** el estado actual (encendido/apagado y volumen).
+- **Consultar** el estado actual (encendido/apagado, volumen y fuente).
+- **Cambiar** la fuente de entrada (*source*) entre las disponibles.
 
 ## Arquitectura
 
@@ -96,8 +97,10 @@ Disponibles tanto en `OnkyoIn.Control` como en `OnkyoIn.Web` (Web los reenvía):
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | `GET` | `/api/device/discover` | Descubre un dispositivo y devuelve su IP |
-| `GET` | `/api/device/state?ipAddress={ip}` | Lee estado (encendido y volumen) |
+| `GET` | `/api/device/state?ipAddress={ip}` | Lee estado (encendido, volumen y fuente actual) |
+| `GET` | `/api/device/inputs?ipAddress={ip}` | Lista las fuentes disponibles y marca la actual |
 | `POST` | `/api/device/power-on` | Enciende el dispositivo |
+| `POST` | `/api/device/input` | Cambia la fuente de entrada |
 | `POST` | `/api/device/volume/up` | Sube el volumen |
 | `POST` | `/api/device/volume/down` | Baja el volumen |
 
@@ -106,6 +109,19 @@ Cuerpo para los `POST`:
 ```json
 { "ipAddress": "192.168.1.100" }
 ```
+
+Para `/api/device/input` se envía además el identificador de la fuente
+(los ids válidos los devuelve `/api/device/inputs`):
+
+```json
+{ "ipAddress": "192.168.1.100", "inputId": "cd" }
+```
+
+> **Nota:** eISCP no tiene un comando para *listar* las entradas del
+> receptor, por lo que `/api/device/inputs` expone el catálogo conocido
+> del modelo (TX-NR6100) y consulta la entrada actual con `SLIQSTN`.
+> Si el receptor reporta una entrada fuera del catálogo (p. ej. HDMI),
+> se incluye como `unknown (XX)` marcada como actual.
 
 Puedes probarlos con los archivos `*.http` incluidos
 (`src/OnkyoIn.Control/OnkyoIn.Control.http`, `src/OnkyoIn.Web/OnkyoIn.Web.http`).

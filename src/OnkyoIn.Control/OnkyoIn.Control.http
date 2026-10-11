@@ -8,6 +8,19 @@ Accept: application/json
 GET {{OnkyoIn.Control_HostAddress}}/api/device/state?ipAddress=192.168.1.100
 Accept: application/json
 
+### Read the input sources available on the device
+GET {{OnkyoIn.Control_HostAddress}}/api/device/inputs?ipAddress=192.168.1.100
+Accept: application/json
+
+### Select an input source (see the /inputs endpoint for valid ids)
+POST {{OnkyoIn.Control_HostAddress}}/api/device/input
+Content-Type: application/json
+
+{
+  "ipAddress": "192.168.1.100",
+  "inputId": "cd"
+}
+
 ### Power on the device
 POST {{OnkyoIn.Control_HostAddress}}/api/device/power-on
 Content-Type: application/json

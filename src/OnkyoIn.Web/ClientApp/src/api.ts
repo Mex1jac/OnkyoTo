@@ -11,6 +11,15 @@ export interface DeviceState {
   ipAddress: string
   isPoweredOn: boolean
   volume: number
+  currentInputId?: string
+  currentInputName?: string
+}
+
+/** An input source, with a flag for the currently selected one. */
+export interface InputSource {
+  id: string
+  name: string
+  isCurrent: boolean
 }
 
 /** Shape of an ASP.NET Core ProblemDetails error response. */
@@ -69,14 +78,21 @@ export async function getState(ipAddress: string): Promise<DeviceState> {
   return (await response.json()) as DeviceState
 }
 
-function post(path: string, ipAddress: string): Promise<Response> {
+export async function getInputs(ipAddress: string): Promise<InputSource[]> {
+  const response = await request(`/api/device/inputs?ipAddress=${encodeURIComponent(ipAddress)}`)
+  return (await response.json()) as InputSource[]
+}
+
+function post(path: string, body: unknown): Promise<Response> {
   return request(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ipAddress }),
+    body: JSON.stringify(body),
   })
 }
 
-export const powerOn = (ipAddress: string) => post('/api/device/power-on', ipAddress).then(() => undefined)
-export const volumeUp = (ipAddress: string) => post('/api/device/volume/up', ipAddress).then(() => undefined)
-export const volumeDown = (ipAddress: string) => post('/api/device/volume/down', ipAddress).then(() => undefined)
+export const powerOn = (ipAddress: string) => post('/api/device/power-on', { ipAddress }).then(() => undefined)
+export const volumeUp = (ipAddress: string) => post('/api/device/volume/up', { ipAddress }).then(() => undefined)
+export const volumeDown = (ipAddress: string) => post('/api/device/volume/down', { ipAddress }).then(() => undefined)
+export const setInput = (ipAddress: string, inputId: string) =>
+  post('/api/device/input', { ipAddress, inputId }).then(() => undefined)

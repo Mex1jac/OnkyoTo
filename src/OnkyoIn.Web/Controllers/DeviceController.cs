@@ -33,7 +33,19 @@ public class DeviceController : ControllerBase
         CancellationToken cancellationToken)
     {
         var state = await _deviceApp.GetStateAsync(ipAddress, cancellationToken);
-        return Ok(new DeviceStateResponse(state.IpAddress, state.IsPoweredOn, state.Volume));
+        return Ok(new DeviceStateResponse(
+            state.IpAddress, state.IsPoweredOn, state.Volume,
+            state.CurrentInputId, state.CurrentInputName));
+    }
+
+    /// <summary>Reads the input sources available on the device.</summary>
+    [HttpGet("inputs")]
+    public async Task<ActionResult<IReadOnlyList<InputSourceResponse>>> GetInputs(
+        [FromQuery] string ipAddress,
+        CancellationToken cancellationToken)
+    {
+        var result = await _deviceApp.GetInputsAsync(ipAddress, cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>Sends the power-on command to the device.</summary>
@@ -41,6 +53,14 @@ public class DeviceController : ControllerBase
     public async Task<IActionResult> PowerOn(DeviceCommandRequest request, CancellationToken cancellationToken)
     {
         await _deviceApp.PowerOnAsync(request, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>Selects an input source on the device.</summary>
+    [HttpPost("input")]
+    public async Task<IActionResult> SetInput(SetInputRequest request, CancellationToken cancellationToken)
+    {
+        await _deviceApp.SetInputAsync(request, cancellationToken);
         return NoContent();
     }
 
