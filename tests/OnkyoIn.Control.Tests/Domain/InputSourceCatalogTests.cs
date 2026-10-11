@@ -11,12 +11,12 @@ public class InputSourceCatalogTests
     }
 
     [Theory]
-    [InlineData("bd-dvd", "00")]
+    [InlineData("bd-dvd", "10")]
     [InlineData("cbl-sat", "01")]
     [InlineData("game", "02")]
     [InlineData("aux", "03")]
     [InlineData("pc", "05")]
-    [InlineData("strm-box", "0A")]
+    [InlineData("strm-box", "11")]
     [InlineData("tv", "12")]
     [InlineData("phono", "22")]
     [InlineData("cd", "23")]

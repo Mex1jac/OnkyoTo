@@ -20,12 +20,12 @@ public static class InputSourceCatalog
 {
     public static IReadOnlyList<InputSource> Sources { get; } = new[]
     {
-        new InputSource("bd-dvd", "BD/DVD", "00"),
+        new InputSource("bd-dvd", "BD/DVD", "10"),
         new InputSource("cbl-sat", "CBL/SAT", "01"),
         new InputSource("game", "GAME", "02"),
         new InputSource("aux", "AUX (Front)", "03"),
         new InputSource("pc", "PC", "05"),
-        new InputSource("strm-box", "STRM BOX", "0A"),
+        new InputSource("strm-box", "STRM BOX", "11"),
         new InputSource("tv", "TV", "12"),
         new InputSource("phono", "PHONO", "22"),
         new InputSource("cd", "CD", "23"),
