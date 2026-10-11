@@ -15,6 +15,22 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
 {
     private const int DefaultPort = 60128;
 
+    private readonly int _port;
+
+    public OnkyoDeviceGateway()
+        : this(DefaultPort)
+    {
+    }
+
+    /// <summary>
+    /// Creates the gateway. The port is injectable so tests can
+    /// point it at a fake eISCP receiver.
+    /// </summary>
+    public OnkyoDeviceGateway(int port)
+    {
+        _port = port;
+    }
+
     /// <summary>
     /// Time to wait for the power-on acknowledgement. Receivers coming out of
     /// standby can take well over the library's 2000 ms default before they
@@ -133,10 +149,23 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
         });
 
     public Task VolumeUpAsync(string ipAddress, CancellationToken cancellationToken = default)
-        => SendAsync(ipAddress, async receiver => { await receiver.SetVolumeUpAsync(Zone.Main); return true; });
+        => SendAsync(ipAddress, async receiver =>
+        {
+            // The library's SetVolumeUpAsync builds "MVL00" (its Volume
+            // command always renders the absolute level and ignores
+            // RawData), which mutes the receiver instead of stepping
+            // up. Send the raw eISCP command until the library is fixed.
+            await receiver.SendCommandAsync("MVLUP");
+            return true;
+        });
 
     public Task VolumeDownAsync(string ipAddress, CancellationToken cancellationToken = default)
-        => SendAsync(ipAddress, async receiver => { await receiver.SetVolumeDownAsync(Zone.Main); return true; });
+        => SendAsync(ipAddress, async receiver =>
+        {
+            // Same library issue as volume-up: send the raw command.
+            await receiver.SendCommandAsync("MVLDOWN");
+            return true;
+        });
 
     // Receivers in standby often do not answer input queries; the
     // input is optional information in the state response.
@@ -152,10 +181,10 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
         }
     }
 
-    private static Task SendAsync(string ipAddress, Func<Receiver, Task> command)
+    private Task SendAsync(string ipAddress, Func<Receiver, Task> command)
         => SendAsync(ipAddress, async receiver => { await command(receiver); return true; });
 
-    private static async Task<T> SendAsync<T>(string ipAddress, Func<Receiver, Task<T>> action)
+    private async Task<T> SendAsync<T>(string ipAddress, Func<Receiver, Task<T>> action)
     {
         if (string.IsNullOrWhiteSpace(ipAddress))
         {
@@ -165,7 +194,7 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
         try
         {
             using var receiver = new Receiver();
-            await receiver.ConnectAsync(ipAddress, DefaultPort);
+            await receiver.ConnectAsync(ipAddress, _port);
             return await action(receiver);
         }
         catch (TimeoutException ex)
