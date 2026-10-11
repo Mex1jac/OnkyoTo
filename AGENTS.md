@@ -75,10 +75,10 @@
 | 12 | El control de volumen baja el volumen al minimo en lugar de hacerlo por pasos | Alto | Hecho | Causa raíz #13: la librería enviaba `MVL00`; ahora se envía `MVLDOWN` crudo (verificar en dispositivo) |
 | 13 | El control de volumen sube el volumen no funciona | Alto | Hecho | Causa raíz: `Volume.BuildMessage` ignora `RawData` y enviaba `MVL00` (muting); ahora se envía `MVLUP` crudo + test de socket (verificar en dispositivo) |
 | 14 | Implementar el cambio de origen (fuente de entrada) | Alto | Hecho | `GET /api/device/inputs` (catálogo TX-NR6100 + actual vía `SLIQSTN`) y `POST /api/device/input` con verificación |
-| 15 | en el control de entradas Am tuner y Fm tuner estan invertidos | Alto | pendiente | |
+| 15 | en el control de entradas Am tuner y Fm tuner estan invertidos | Alto | Hecho | Códigos cruzados: ahora `am`=`SLI25`, `fm`=`SLI24` (verificado en dispositivo) |
 | 16 | Cambiar el codigo para que l mismo boton de enencendido tambien funcione para apagarlo | Alto | pendiente | |
-| 17 | El cambio a la fuente BD/DVD no funciona | Alto | pendiente | |
-| 17 | El cambio a la fuente STRM BOX no funciona | Alto | pendiente | |
+| 17 | El cambio a la fuente BD/DVD no funciona | Alto | Hecho | Causa: `SLI00` es VIDEO1/STB; ahora `SLI10` (verificar en dispositivo) |
+| 18 | El cambio a la fuente STRM BOX no funciona | Alto | Hecho | Causa: `SLI0A` no existe en el set clásico; ahora `SLI11` (verificar en dispositivo) |
 
 
 ## 9. Notas y decisiones
