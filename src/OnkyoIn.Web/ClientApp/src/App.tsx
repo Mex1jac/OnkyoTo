@@ -113,6 +113,8 @@ function App() {
 
   const hasDevice = ipAddress.trim().length > 0
   const isPoweredOn = state?.isPoweredOn ?? false
+  const powerText = state ? (isPoweredOn ? 'On' : 'Off') : '—'
+  const powerClass = state ? (isPoweredOn ? 'on' : 'off') : ''
   const currentInputId =
     sources.find((source) => source.isCurrent)?.id ?? state?.currentInputId ?? ''
 
@@ -121,21 +123,43 @@ function App() {
       <h1>OnkyoIn</h1>
       <p className="subtitle">Control your Onkyo receiver</p>
 
-      <section className="panel">
-        <label htmlFor="ip">Device IP</label>
-        <input
-          id="ip"
-          name="ipAddress"
-          type="text"
-          placeholder="192.168.1.100"
-          autoComplete="off"
-          spellCheck={false}
-          value={ipAddress}
-          onChange={(event) => setIpAddress(event.target.value)}
-        />
-        <button onClick={handleDiscover} disabled={busy}>
-          Discover Device
-        </button>
+      <section className="panel state" aria-label="Device state">
+        <div className="state-controls">
+          <input
+            id="ip"
+            name="ipAddress"
+            type="text"
+            placeholder="192.168.1.100"
+            autoComplete="off"
+            spellCheck={false}
+            aria-label="Device IP"
+            value={ipAddress}
+            onChange={(event) => setIpAddress(event.target.value)}
+          />
+          <button onClick={handleDiscover} disabled={busy}>
+            Discover Device
+          </button>
+        </div>
+        <div className="state-values">
+          <div className="state-item">
+            <span className="state-label">Power</span>
+            <span className={`state-value ${powerClass}`}>{powerText}</span>
+          </div>
+          <div className="state-item">
+            <span className="state-label">Volume</span>
+            <span className="state-value">{state?.volume ?? '—'}</span>
+          </div>
+          <div className="state-item">
+            <span className="state-label">Source</span>
+            <span className="state-value">
+              {state?.currentInputName ?? '—'}
+            </span>
+          </div>
+          <div className="state-item">
+            <span className="state-label">IP</span>
+            <span className="state-value">{ipAddress || '—'}</span>
+          </div>
+        </div>
       </section>
 
       <section className="panel">
@@ -182,25 +206,6 @@ function App() {
           Volume −
         </button>
       </section>
-
-      {state && (
-        <section className="panel state" aria-label="Device state">
-          <div className="state-item">
-            <span className="state-label">Power</span>
-            <span className={`state-value ${state.isPoweredOn ? 'on' : 'off'}`}>
-              {state.isPoweredOn ? 'On' : 'Off'}
-            </span>
-          </div>
-          <div className="state-item">
-            <span className="state-label">Volume</span>
-            <span className="state-value">{state.volume}</span>
-          </div>
-          <div className="state-item">
-            <span className="state-label">Source</span>
-            <span className="state-value">{state.currentInputName ?? '—'}</span>
-          </div>
-        </section>
-      )}
 
       {feedback && (
         <p className={`status ${feedback.kind}`} role={feedback.kind === 'error' ? 'alert' : 'status'}>
