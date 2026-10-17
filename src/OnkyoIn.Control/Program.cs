@@ -16,6 +16,10 @@ builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<OnkyoExceptionHandler>();
 
 // DDD wiring: application service depends on the gateway port (dependency inversion).
+// Device settings (eISCP port, power-on timeout) come from the "Onkyo"
+// section of appsettings.json and can be overridden per environment.
+builder.Services.Configure<OnkyoOptions>(
+    builder.Configuration.GetSection(OnkyoOptions.SectionName));
 builder.Services.AddScoped<IOnkyoDeviceGateway, OnkyoDeviceGateway>();
 builder.Services.AddScoped<DeviceControlService>();
 

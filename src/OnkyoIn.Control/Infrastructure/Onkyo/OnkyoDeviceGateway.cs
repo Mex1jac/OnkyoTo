@@ -1,8 +1,10 @@
+using Microsoft.Extensions.Options;
 using Onkyo.eISCP;
 using Onkyo.eISCP.Commands;
 using OnkyoIn.Control.Domain.Entities;
 using OnkyoIn.Control.Domain.Exceptions;
 using OnkyoIn.Control.Domain.Gateways;
+using OnkyoIn.Control.Infrastructure.Configuration;
 
 namespace OnkyoIn.Control.Infrastructure.Onkyo;
 
@@ -13,12 +15,26 @@ namespace OnkyoIn.Control.Infrastructure.Onkyo;
 /// </summary>
 public class OnkyoDeviceGateway : IOnkyoDeviceGateway
 {
-    private const int DefaultPort = 60128;
-
     private readonly int _port;
+    private readonly int _powerOnTimeoutMs;
+
+    /// <summary>
+    /// Constructor used by dependency injection: reads the eISCP port
+    /// and the power-on timeout from configuration ("Onkyo" section).
+    /// </summary>
+    public OnkyoDeviceGateway(IOptions<OnkyoOptions> options)
+        : this(options.Value)
+    {
+    }
+
+    public OnkyoDeviceGateway(OnkyoOptions options)
+    {
+        _port = options.Port;
+        _powerOnTimeoutMs = options.PowerOnTimeoutMs;
+    }
 
     public OnkyoDeviceGateway()
-        : this(DefaultPort)
+        : this(new OnkyoOptions())
     {
     }
 
@@ -27,17 +43,9 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
     /// point it at a fake eISCP receiver.
     /// </summary>
     public OnkyoDeviceGateway(int port)
+        : this(new OnkyoOptions { Port = port })
     {
-        _port = port;
     }
-
-    /// <summary>
-    /// Time to wait for the power-on acknowledgement. Receivers coming out of
-    /// standby can take well over the library's 2000 ms default before they
-    /// report <c>PWR01</c> (measured ~2.5 s on a real device), which used to
-    /// surface as a timeout even though the device did power on.
-    /// </summary>
-    public const int PowerOnTimeoutMs = 6000;
 
     public async Task<string> DiscoverAsync(CancellationToken cancellationToken = default)
     {
@@ -141,7 +149,7 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
             await PowerOnExecutor.ExecuteAsync(
                 sendPowerOn: () => receiver.SendCommandAsync(
                     new Power(Zone.Main) { SystemOn = true },
-                    PowerOnTimeoutMs),
+                    _powerOnTimeoutMs),
                 isPoweredOn: async () =>
                     (await receiver.GetPowerStatusAsync(Zone.Main))?.SystemOn == true);
 
@@ -159,7 +167,7 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
                 // Receivers acknowledge standby immediately.
                 await receiver.SendCommandAsync(
                     new Power(Zone.Main) { SystemOn = false },
-                    PowerOnTimeoutMs);
+                    _powerOnTimeoutMs);
             }
             else
             {
@@ -168,7 +176,7 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
                 await PowerOnExecutor.ExecuteAsync(
                     sendPowerOn: () => receiver.SendCommandAsync(
                         new Power(Zone.Main) { SystemOn = true },
-                        PowerOnTimeoutMs),
+                        _powerOnTimeoutMs),
                     isPoweredOn: async () =>
                         (await receiver.GetPowerStatusAsync(Zone.Main))?.SystemOn == true);
             }
@@ -198,6 +206,116 @@ public class OnkyoDeviceGateway : IOnkyoDeviceGateway
             await receiver.SendCommandAsync("MVLDOWN");
             return true;
         });
+
+    public async Task<TunerState?> GetTunerAsync(string ipAddress, CancellationToken cancellationToken = default)
+    {
+        var (band, preset) = await SendAsync<(string? Band, int? Preset)>(
+            ipAddress,
+            async receiver =>
+            {
+                var inputStatus = await receiver.GetInputAsync(Zone.Main);
+                var current = InputSourceCatalog.FindBySliCode(inputStatus.RawData);
+
+                // The tuner state only applies when the active input is AM or FM.
+                if (current?.Id is not ("am" or "fm"))
+                {
+                    return (Band: null, Preset: null);
+                }
+
+                return (Band: current.Id, Preset: await TryGetPresetAsync(receiver));
+            });
+
+        return band is null ? null : new TunerState(band, preset);
+    }
+
+    public Task<TunerState> SetPresetAsync(string ipAddress, int preset, CancellationToken cancellationToken = default)
+    {
+        if (preset is < 1 or > 40)
+        {
+            throw new ArgumentException(
+                "The preset must be between 1 and 40.", nameof(preset));
+        }
+
+        return ChangePresetAsync(ipAddress, $"PRS{preset:X2}", expectedPreset: preset);
+    }
+
+    public Task<TunerState> PresetUpAsync(string ipAddress, CancellationToken cancellationToken = default)
+        => ChangePresetAsync(ipAddress, "PRSUP", expectedPreset: null);
+
+    public Task<TunerState> PresetDownAsync(string ipAddress, CancellationToken cancellationToken = default)
+        => ChangePresetAsync(ipAddress, "PRSDOWN", expectedPreset: null);
+
+    /// <summary>
+    /// Sends a tuner preset command (raw eISCP, the library has no
+    /// tuner commands) and verifies the result by querying the
+    /// current preset before returning.
+    /// </summary>
+    private async Task<TunerState> ChangePresetAsync(
+        string ipAddress, string command, int? expectedPreset)
+    {
+        var (band, preset) = await SendAsync(
+            ipAddress,
+            async receiver =>
+            {
+                await receiver.SendCommandAsync(command);
+
+                var inputStatus = await receiver.GetInputAsync(Zone.Main);
+                var current = InputSourceCatalog.FindBySliCode(inputStatus.RawData);
+                var tunerPreset = await TryGetPresetAsync(receiver);
+                return (Band: current?.Id, Preset: tunerPreset);
+            });
+
+        if (band is not ("am" or "fm"))
+        {
+            throw new DeviceCommunicationException(
+                "The device is not on the AM or FM tuner.");
+        }
+
+        if (preset is null || (expectedPreset is not null && preset != expectedPreset))
+        {
+            throw new DeviceCommunicationException(
+                "The device did not switch to the requested preset.");
+        }
+
+        return new TunerState(band, preset);
+    }
+
+    /// <summary>
+    /// Reads the current tuner preset. The preset is optional
+    /// information: receivers may not answer while switching.
+    /// </summary>
+    private static async Task<int?> TryGetPresetAsync(Receiver receiver)
+    {
+        try
+        {
+            var response = await receiver.SendCommandAsync("PRSQSTN");
+            return ParsePreset(response?.RawData);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// The receiver answers PRSQSTN with the preset number in
+    /// hexadecimal (RawData "0A" = preset 10).
+    /// </summary>
+    private static int? ParsePreset(string? rawData)
+    {
+        if (string.IsNullOrEmpty(rawData))
+        {
+            return null;
+        }
+
+        return int.TryParse(
+            rawData,
+            System.Globalization.NumberStyles.HexNumber,
+            System.Globalization.CultureInfo.InvariantCulture,
+            out var preset)
+            ? preset
+            : null;
+    }
 
     // Receivers in standby often do not answer input queries; the
     // input is optional information in the state response.

@@ -215,4 +215,115 @@ public class OnkyoControlHttpClientTests
         Assert.Equal(502, exception.StatusCode);
         Assert.Equal("Could not reach the device.", exception.Message);
     }
+
+    [Fact]
+    public async Task GetTunerAsync_WhenSuccess_ReturnsTuner()
+    {
+        var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                """{"band":"fm","preset":10}""",
+                Encoding.UTF8, "application/json"),
+        });
+
+        var tuner = await client.GetTunerAsync("192.168.1.50");
+
+        Assert.Equal("fm", tuner!.Band);
+        Assert.Equal(10, tuner!.Preset);
+    }
+
+    [Fact]
+    public async Task GetTunerAsync_WhenNotOnTuner_ReturnsNull()
+    {
+        var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                "null",
+                Encoding.UTF8, "application/json"),
+        });
+
+        var tuner = await client.GetTunerAsync("192.168.1.50");
+
+        Assert.Null(tuner);
+    }
+
+    [Fact]
+    public async Task GetTunerAsync_WhenProblemDetails_ThrowsWithDetail()
+    {
+        var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.BadGateway)
+        {
+            Content = new StringContent(
+                """{"title":"Device communication error","detail":"Could not reach the device.","status":502}""",
+                Encoding.UTF8, "application/problem+json"),
+        });
+
+        var exception = await Assert.ThrowsAsync<ControlApiException>(
+            () => client.GetTunerAsync("192.168.1.50"));
+
+        Assert.Equal(502, exception.StatusCode);
+        Assert.Equal("Could not reach the device.", exception.Message);
+    }
+
+    [Fact]
+    public async Task SetPresetAsync_WhenSuccess_ReturnsTuner()
+    {
+        var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                """{"band":"am","preset":3}""",
+                Encoding.UTF8, "application/json"),
+        });
+
+        var tuner = await client.SetPresetAsync("192.168.1.50", 3);
+
+        Assert.Equal("am", tuner.Band);
+        Assert.Equal(3, tuner.Preset);
+    }
+
+    [Fact]
+    public async Task SetPresetAsync_WhenProblemDetails_ThrowsWithDetail()
+    {
+        var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.BadGateway)
+        {
+            Content = new StringContent(
+                """{"title":"Device communication error","detail":"The device did not switch to the requested preset.","status":502}""",
+                Encoding.UTF8, "application/problem+json"),
+        });
+
+        var exception = await Assert.ThrowsAsync<ControlApiException>(
+            () => client.SetPresetAsync("192.168.1.50", 3));
+
+        Assert.Equal(502, exception.StatusCode);
+        Assert.Equal("The device did not switch to the requested preset.", exception.Message);
+    }
+
+    [Fact]
+    public async Task PresetUpAsync_WhenSuccess_ReturnsTuner()
+    {
+        var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                """{"band":"fm","preset":11}""",
+                Encoding.UTF8, "application/json"),
+        });
+
+        var tuner = await client.PresetUpAsync("192.168.1.50");
+
+        Assert.Equal(11, tuner.Preset);
+    }
+
+    [Fact]
+    public async Task PresetDownAsync_WhenSuccess_ReturnsTuner()
+    {
+        var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                """{"band":"fm","preset":9}""",
+                Encoding.UTF8, "application/json"),
+        });
+
+        var tuner = await client.PresetDownAsync("192.168.1.50");
+
+        Assert.Equal(9, tuner.Preset);
+    }
 }

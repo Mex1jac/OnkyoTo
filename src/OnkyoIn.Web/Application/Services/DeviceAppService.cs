@@ -42,4 +42,17 @@ public class DeviceAppService
 
     public Task VolumeDownAsync(DeviceCommandRequest request, CancellationToken cancellationToken = default)
         => _controlClient.VolumeDownAsync(request.IpAddress, cancellationToken);
+
+    public Task<TunerState?> GetTunerAsync(string ipAddress, CancellationToken cancellationToken = default)
+        => _controlClient.GetTunerAsync(ipAddress, cancellationToken);
+
+    public Task<TunerState> SetPresetAsync(
+        string ipAddress, int preset, CancellationToken cancellationToken = default)
+        => _controlClient.SetPresetAsync(ipAddress, preset, cancellationToken);
+
+    public Task<TunerState> PresetUpAsync(string ipAddress, CancellationToken cancellationToken = default)
+        => _controlClient.PresetUpAsync(ipAddress, cancellationToken);
+
+    public Task<TunerState> PresetDownAsync(string ipAddress, CancellationToken cancellationToken = default)
+        => _controlClient.PresetDownAsync(ipAddress, cancellationToken);
 }

@@ -14,9 +14,12 @@ public class DeviceControlServiceTests
         public DeviceState ToggleState { get; set; } = new(false, 20);
         public DeviceInputs Inputs { get; set; } = new(
             InputSourceCatalog.Sources, InputSourceCatalog.Sources.First());
+        public TunerState? Tuner { get; set; } = new TunerState("fm", 10);
+        public TunerState ChangedTuner { get; set; } = new TunerState("fm", 11);
         public string? LastIp { get; private set; }
         public string? LastCommand { get; private set; }
         public string? LastInputId { get; private set; }
+        public int? LastPreset { get; private set; }
 
         public Task<string> DiscoverAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(DiscoveredIp!);
@@ -69,6 +72,35 @@ public class DeviceControlServiceTests
             LastIp = ipAddress;
             LastCommand = "volume-down";
             return Task.CompletedTask;
+        }
+
+        public Task<TunerState?> GetTunerAsync(string ipAddress, CancellationToken cancellationToken = default)
+        {
+            LastIp = ipAddress;
+            LastCommand = "get-tuner";
+            return Task.FromResult(Tuner);
+        }
+
+        public Task<TunerState> SetPresetAsync(string ipAddress, int preset, CancellationToken cancellationToken = default)
+        {
+            LastIp = ipAddress;
+            LastPreset = preset;
+            LastCommand = "set-preset";
+            return Task.FromResult(ChangedTuner);
+        }
+
+        public Task<TunerState> PresetUpAsync(string ipAddress, CancellationToken cancellationToken = default)
+        {
+            LastIp = ipAddress;
+            LastCommand = "preset-up";
+            return Task.FromResult(ChangedTuner);
+        }
+
+        public Task<TunerState> PresetDownAsync(string ipAddress, CancellationToken cancellationToken = default)
+        {
+            LastIp = ipAddress;
+            LastCommand = "preset-down";
+            return Task.FromResult(ChangedTuner);
         }
     }
 
@@ -192,5 +224,69 @@ public class DeviceControlServiceTests
         await service.VolumeDownAsync(new DeviceCommandRequest("10.0.0.9"));
 
         Assert.Equal("volume-down", gateway.LastCommand);
+    }
+
+    [Fact]
+    public async Task GetTunerAsync_ReturnsTunerFromGateway()
+    {
+        var gateway = new FakeGateway { Tuner = new TunerState("am", 5) };
+        var service = new DeviceControlService(gateway);
+
+        var result = await service.GetTunerAsync("10.0.0.9");
+
+        Assert.NotNull(result);
+        Assert.Equal("am", result!.Band);
+        Assert.Equal(5, result!.Preset);
+        Assert.Equal("get-tuner", gateway.LastCommand);
+    }
+
+    [Fact]
+    public async Task GetTunerAsync_WithoutTuner_ReturnsNull()
+    {
+        var gateway = new FakeGateway { Tuner = null };
+        var service = new DeviceControlService(gateway);
+
+        var result = await service.GetTunerAsync("10.0.0.9");
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task SetPresetAsync_ForwardsIpAndPreset()
+    {
+        var gateway = new FakeGateway();
+        var service = new DeviceControlService(gateway);
+
+        var result = await service.SetPresetAsync("10.0.0.9", 12);
+
+        Assert.Equal("10.0.0.9", gateway.LastIp);
+        Assert.Equal(12, gateway.LastPreset);
+        Assert.Equal("set-preset", gateway.LastCommand);
+        Assert.Equal("fm", result.Band);
+        Assert.Equal(11, result.Preset);
+    }
+
+    [Fact]
+    public async Task PresetUpAsync_ForwardsIpToGateway()
+    {
+        var gateway = new FakeGateway();
+        var service = new DeviceControlService(gateway);
+
+        await service.PresetUpAsync("10.0.0.9");
+
+        Assert.Equal("10.0.0.9", gateway.LastIp);
+        Assert.Equal("preset-up", gateway.LastCommand);
+    }
+
+    [Fact]
+    public async Task PresetDownAsync_ForwardsIpToGateway()
+    {
+        var gateway = new FakeGateway();
+        var service = new DeviceControlService(gateway);
+
+        await service.PresetDownAsync("10.0.0.9");
+
+        Assert.Equal("10.0.0.9", gateway.LastIp);
+        Assert.Equal("preset-down", gateway.LastCommand);
     }
 }

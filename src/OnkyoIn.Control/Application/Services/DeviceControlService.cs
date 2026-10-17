@@ -55,4 +55,29 @@ public class DeviceControlService
 
     public Task VolumeDownAsync(DeviceCommandRequest request, CancellationToken cancellationToken = default)
         => _gateway.VolumeDownAsync(request.IpAddress, cancellationToken);
+
+    public async Task<TunerStateResponse?> GetTunerAsync(string ipAddress, CancellationToken cancellationToken = default)
+    {
+        var tuner = await _gateway.GetTunerAsync(ipAddress, cancellationToken);
+        return tuner is null ? null : new TunerStateResponse(tuner.Band, tuner.Preset);
+    }
+
+    public async Task<TunerStateResponse> SetPresetAsync(
+        string ipAddress, int preset, CancellationToken cancellationToken = default)
+    {
+        var tuner = await _gateway.SetPresetAsync(ipAddress, preset, cancellationToken);
+        return new TunerStateResponse(tuner.Band, tuner.Preset);
+    }
+
+    public async Task<TunerStateResponse> PresetUpAsync(string ipAddress, CancellationToken cancellationToken = default)
+    {
+        var tuner = await _gateway.PresetUpAsync(ipAddress, cancellationToken);
+        return new TunerStateResponse(tuner.Band, tuner.Preset);
+    }
+
+    public async Task<TunerStateResponse> PresetDownAsync(string ipAddress, CancellationToken cancellationToken = default)
+    {
+        var tuner = await _gateway.PresetDownAsync(ipAddress, cancellationToken);
+        return new TunerStateResponse(tuner.Band, tuner.Preset);
+    }
 }

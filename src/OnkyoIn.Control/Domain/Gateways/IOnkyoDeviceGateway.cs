@@ -28,4 +28,16 @@ public interface IOnkyoDeviceGateway
     Task VolumeUpAsync(string ipAddress, CancellationToken cancellationToken = default);
 
     Task VolumeDownAsync(string ipAddress, CancellationToken cancellationToken = default);
+
+    /// <summary>Reads the tuner state (band and preset) of a device on the AM or FM input.</summary>
+    Task<TunerState?> GetTunerAsync(string ipAddress, CancellationToken cancellationToken = default);
+
+    /// <summary>Selects a tuner preset (1-40) on the AM or FM band.</summary>
+    Task<TunerState> SetPresetAsync(string ipAddress, int preset, CancellationToken cancellationToken = default);
+
+    /// <summary>Selects the next tuner preset.</summary>
+    Task<TunerState> PresetUpAsync(string ipAddress, CancellationToken cancellationToken = default);
+
+    /// <summary>Selects the previous tuner preset.</summary>
+    Task<TunerState> PresetDownAsync(string ipAddress, CancellationToken cancellationToken = default);
 }

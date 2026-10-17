@@ -87,4 +87,44 @@ public class DeviceController : ControllerBase
         await _deviceControl.VolumeDownAsync(request, cancellationToken);
         return NoContent();
     }
+
+    /// <summary>Reads the tuner state (band and preset) when the input is AM or FM.</summary>
+    [HttpGet("tuner")]
+    public async Task<ActionResult<TunerStateResponse?>> GetTuner(
+        [FromQuery] string ipAddress,
+        CancellationToken cancellationToken)
+    {
+        var tuner = await _deviceControl.GetTunerAsync(ipAddress, cancellationToken);
+        return Ok(tuner);
+    }
+
+    /// <summary>Selects a tuner preset (1-40) on the AM or FM band.</summary>
+    [HttpPost("tuner/preset")]
+    public async Task<ActionResult<TunerStateResponse>> SetPreset(
+        TunerPresetRequest request,
+        CancellationToken cancellationToken)
+    {
+        var tuner = await _deviceControl.SetPresetAsync(request.IpAddress, request.Preset, cancellationToken);
+        return Ok(tuner);
+    }
+
+    /// <summary>Selects the next tuner preset.</summary>
+    [HttpPost("tuner/preset/up")]
+    public async Task<ActionResult<TunerStateResponse>> PresetUp(
+        DeviceCommandRequest request,
+        CancellationToken cancellationToken)
+    {
+        var tuner = await _deviceControl.PresetUpAsync(request.IpAddress, cancellationToken);
+        return Ok(tuner);
+    }
+
+    /// <summary>Selects the previous tuner preset.</summary>
+    [HttpPost("tuner/preset/down")]
+    public async Task<ActionResult<TunerStateResponse>> PresetDown(
+        DeviceCommandRequest request,
+        CancellationToken cancellationToken)
+    {
+        var tuner = await _deviceControl.PresetDownAsync(request.IpAddress, cancellationToken);
+        return Ok(tuner);
+    }
 }

@@ -81,6 +81,9 @@
 | 18 | El cambio a la fuente STRM BOX no funciona | Alto | Hecho | Causa: `SLI0A` no existe en el set clásico; ahora `SLI11` (verificar en dispositivo) |
 | 19 | Refrescar el estado automaticamente y quitar el boton de Refresh State | Media | Hecho | La SPA recarga el estado tras cada cambio (fuente, volumen, encendido) y al poner la IP; boton eliminado |
 | 20 | El control donde se presenta la ip que devuelve el dispositivo hay que moverlo a la caja de estado y quitar el texto y la caja de device ip , el estado debe aparecer de inmediato unavez que descubres la ip | Alto | Hecho | Input + botón Discover en la caja de estado (arriba, siempre visible); columna IP nueva; estado inmediato al descubrir |
+| 21 | Implementar la seleccion de presets para am y fm  | Alta | Hecho | `GET /api/device/tuner`, `POST /api/device/tuner/preset` (+ `/up`, `/down`); `PRSxx`/`PRSUP`/`PRSDOWN` crudos + verificación `PRSQSTN`; panel Tuner en la SPA (AM/FM, select 1–40 + ◀ ▶) |
+| 22 | Quitar la caja de texto de la ip que esta a un costado del boton discover device  | Alta | Hecho | Input de IP eliminado de la caja de estado; la IP se fija con Discover o `?ip=...` |
+| 23 | poner un espacio entre los titulos OnkyioIn y Contrl your onkyio device | Alta | Hecho | `margin-bottom` del `h1` subido a `0.75rem` |
 
 ## 9. Notas y decisiones
 - Se usa **DDD en carpetas** dentro de 2 proyectos (no un proyecto por capa) para mantenerlo simple, según decisión del usuario.
@@ -88,6 +91,7 @@
 - El frontend es una **SPA React** servida aparte por Vite en desarrollo; en producción se puede publicar en `wwwroot`.
 - El puerto eISCP por defecto es **60128** (TCP), y el descubrimiento es por **UDP broadcast** (`ECNQSTN`).
 - **Configuración por entorno:** CORS se controla con la sección `Cors:AllowedOrigins` en `appsettings.json` (vacío por defecto) y `appsettings.Development.json` (orígenes locales: Vite `5173`, Web `7261/5241`). En entornos distintos de Development, si no hay orígenes configurados, la app **falla al arrancar** en lugar de permitir todo. La URL de Control (`ControlApi:BaseUrl`) es obligatoria en Web. Los valores pueden sobreescribirse por variables de entorno, p. ej. `Cors__AllowedOrigins__0`.
+- **Configuración del dispositivo (OnkyoIn.Control):** el puerto eISCP y el timeout de encendido se configuran con la sección `Onkyo` (`Onkyo:Port`, `Onkyo:PowerOnTimeoutMs`) en `appsettings.json`, enlazada con el patrón Options (`OnkyoOptions`); se pueden sobreescribir por variables de entorno, p. ej. `Onkyo__PowerOnTimeoutMs=8000`, sin recompilar.
 - **Manejo de errores:** se usan excepciones de dominio (`DeviceNotFoundException`, `DeviceCommunicationException` en Control; `ControlApiException` en Web) traducidas a **ProblemDetails** estándar por un `IExceptionHandler` en cada API. El SPA lee `detail` del ProblemDetails para mostrar mensajes claros.
 - **Códigos HTTP:** 400 petición inválida, 404 dispositivo no encontrado, 502 error de comunicación con el dispositivo / servicio inalcanzable, 504 timeout, 500 inesperado.
-- **Endpoints de la API:** `GET /api/device/discover`, `GET /api/device/state?ipAddress=...`, `GET /api/device/inputs?ipAddress=...`, `POST /api/device/power-on`, `POST /api/device/power/toggle`, `POST /api/device/volume/up`, `POST /api/device/volume/down`, `POST /api/device/input`.
+- **Endpoints de la API:** `GET /api/device/discover`, `GET /api/device/state?ipAddress=...`, `GET /api/device/inputs?ipAddress=...`, `GET /api/device/tuner?ipAddress=...`, `POST /api/device/power-on`, `POST /api/device/power/toggle`, `POST /api/device/volume/up`, `POST /api/device/volume/down`, `POST /api/device/input`, `POST /api/device/tuner/preset`, `POST /api/device/tuner/preset/up`, `POST /api/device/tuner/preset/down`.

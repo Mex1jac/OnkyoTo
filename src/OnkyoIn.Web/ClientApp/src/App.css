@@ -6,7 +6,7 @@
 }
 
 h1 {
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.75rem;
 }
 
 .subtitle {
@@ -101,16 +101,23 @@ button:focus-visible {
   gap: 0.75rem;
 }
 
-.state-controls input {
-  flex: 1;
-  min-width: 0;
-}
-
 .state-values {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   gap: 1.25rem;
+}
+
+.tuner-controls {
+  display: flex;
+  flex-direction: row;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.tuner-controls select {
+  flex: 1;
+  min-width: 0;
 }
 
 .state-item {

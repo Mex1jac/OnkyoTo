@@ -99,9 +99,13 @@ Disponibles tanto en `OnkyoIn.Control` como en `OnkyoIn.Web` (Web los reenvía):
 | `GET` | `/api/device/discover` | Descubre un dispositivo y devuelve su IP |
 | `GET` | `/api/device/state?ipAddress={ip}` | Lee estado (encendido, volumen y fuente actual) |
 | `GET` | `/api/device/inputs?ipAddress={ip}` | Lista las fuentes disponibles y marca la actual |
+| `GET` | `/api/device/tuner?ipAddress={ip}` | Lee el tuner (banda AM/FM y preset actual) |
 | `POST` | `/api/device/power-on` | Enciende el dispositivo |
 | `POST` | `/api/device/power/toggle` | Alterna el encendido y devuelve el nuevo estado |
 | `POST` | `/api/device/input` | Cambia la fuente de entrada |
+| `POST` | `/api/device/tuner/preset` | Selecciona un preset (1-40) del tuner AM/FM |
+| `POST` | `/api/device/tuner/preset/up` | Siguiente preset del tuner |
+| `POST` | `/api/device/tuner/preset/down` | Preset anterior del tuner |
 | `POST` | `/api/device/volume/up` | Sube el volumen |
 | `POST` | `/api/device/volume/down` | Baja el volumen |
 
@@ -148,6 +152,8 @@ La configuración se toma de `appsettings.json` y se sobreescribe por entorno
 |-------|----------|-------------|
 | `ControlApi:BaseUrl` | OnkyoIn.Web | URL de la API de Control (obligatoria) |
 | `Cors:AllowedOrigins` | Ambos | Orígenes permitidos para CORS |
+| `Onkyo:Port` | OnkyoIn.Control | Puerto TCP del interfaz eISCP del aparato (por defecto `60128`) |
+| `Onkyo:PowerOnTimeoutMs` | OnkyoIn.Control | Espera del acuse de encendido en ms (por defecto `6000`; el encendido desde standby tarda ~2,5 s en un aparato real) |
 
 - En **Development** ya vienen configurados los orígenes locales (Vite `5173`, Web `7261/5241`).
 - En **Production** debes indicar los orígenes explícitamente; si no, la aplicación
@@ -158,6 +164,7 @@ Ejemplo con variables de entorno:
 ```bash
 Cors__AllowedOrigins__0=https://mi-dominio.com
 ControlApi__BaseUrl=https://control.mi-dominio.com
+Onkyo__PowerOnTimeoutMs=8000
 ```
 
 ## Notas

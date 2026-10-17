@@ -23,6 +23,14 @@ public interface IOnkyoControlClient
     Task VolumeUpAsync(string ipAddress, CancellationToken cancellationToken = default);
 
     Task VolumeDownAsync(string ipAddress, CancellationToken cancellationToken = default);
+
+    Task<TunerState?> GetTunerAsync(string ipAddress, CancellationToken cancellationToken = default);
+
+    Task<TunerState> SetPresetAsync(string ipAddress, int preset, CancellationToken cancellationToken = default);
+
+    Task<TunerState> PresetUpAsync(string ipAddress, CancellationToken cancellationToken = default);
+
+    Task<TunerState> PresetDownAsync(string ipAddress, CancellationToken cancellationToken = default);
 }
 
 /// <summary>Read-only snapshot of a device's state as returned by the control API.</summary>
@@ -32,3 +40,6 @@ public record DeviceState(
     int Volume,
     string? CurrentInputId = null,
     string? CurrentInputName = null);
+
+/// <summary>Read-only snapshot of a device's tuner state as returned by the control API.</summary>
+public record TunerState(string? Band, int? Preset);

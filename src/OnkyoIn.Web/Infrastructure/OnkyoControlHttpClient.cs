@@ -95,6 +95,46 @@ public class OnkyoControlHttpClient : IOnkyoControlClient
     public Task VolumeDownAsync(string ipAddress, CancellationToken cancellationToken = default)
         => PostAsync("api/device/volume/down", new { ipAddress }, cancellationToken);
 
+    public async Task<TunerState?> GetTunerAsync(string ipAddress, CancellationToken cancellationToken = default)
+    {
+        var url = $"api/device/tuner?ipAddress={Uri.EscapeDataString(ipAddress)}";
+        var response = await SendAsync(
+            () => _httpClient.GetAsync(url, cancellationToken),
+            cancellationToken);
+
+        var payload = await ReadAsync<TunerStateResponse?>(response, cancellationToken);
+
+        return payload is null
+            ? null
+            : new TunerState(payload.Band, payload.Preset);
+    }
+
+    public Task<TunerState> SetPresetAsync(
+        string ipAddress, int preset, CancellationToken cancellationToken = default)
+        => ChangePresetAsync("api/device/tuner/preset", new { ipAddress, preset }, cancellationToken);
+
+    public Task<TunerState> PresetUpAsync(string ipAddress, CancellationToken cancellationToken = default)
+        => ChangePresetAsync("api/device/tuner/preset/up", new { ipAddress }, cancellationToken);
+
+    public Task<TunerState> PresetDownAsync(string ipAddress, CancellationToken cancellationToken = default)
+        => ChangePresetAsync("api/device/tuner/preset/down", new { ipAddress }, cancellationToken);
+
+    private async Task<TunerState> ChangePresetAsync(
+        string path, object body, CancellationToken cancellationToken)
+    {
+        var response = await SendAsync(
+            () => _httpClient.PostAsJsonAsync(path, body, cancellationToken),
+            cancellationToken);
+
+        var payload = await ReadAsync<TunerStateResponse>(response, cancellationToken);
+
+        return payload is null
+            ? throw new ControlApiException(
+                (int)response.StatusCode,
+                "The control API did not return the tuner state.")
+            : new TunerState(payload.Band, payload.Preset);
+    }
+
     private async Task PostAsync(string path, object body, CancellationToken cancellationToken)
     {
         var response = await SendAsync(
@@ -173,6 +213,8 @@ public class OnkyoControlHttpClient : IOnkyoControlClient
         string? CurrentInputName);
 
     private sealed record ControlInputSourceResponse(string Id, string Name, bool IsCurrent);
+
+    private sealed record TunerStateResponse(string? Band, int? Preset);
 
     private sealed record ProblemResponse(string? Title, string? Detail, int? Status);
 }

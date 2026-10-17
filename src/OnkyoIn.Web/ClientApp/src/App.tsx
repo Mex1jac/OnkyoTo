@@ -3,12 +3,17 @@ import {
   discover,
   getState,
   getInputs,
+  getTuner,
   powerToggle,
   setInput,
+  setTunerPreset,
+  tunerPresetDown,
+  tunerPresetUp,
   volumeDown,
   volumeUp,
   type DeviceState,
   type InputSource,
+  type TunerState,
 } from './api'
 import './App.css'
 
@@ -24,6 +29,7 @@ function App() {
     () => new URLSearchParams(window.location.search).get('ip') ?? '',
   )
   const [state, setState] = useState<DeviceState | null>(null)
+  const [tuner, setTuner] = useState<TunerState | null>(null)
   const [sources, setSources] = useState<InputSource[]>([])
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [busy, setBusy] = useState(false)
@@ -89,6 +95,14 @@ function App() {
         // The device may be unreachable; keep the previous state.
       })
 
+    getTuner(ipAddress)
+      .then((deviceTuner) => {
+        if (!cancelled) setTuner(deviceTuner)
+      })
+      .catch(() => {
+        // The tuner state is optional; keep the previous one.
+      })
+
     getInputs(ipAddress)
       .then((list) => {
         if (!cancelled) setSources(list)
@@ -107,6 +121,7 @@ function App() {
     run('Switching source', async () => {
       await setInput(ipAddress, inputId)
       await refreshState()
+      setTuner(await getTuner(ipAddress))
       setSources(await getInputs(ipAddress))
     })
   }
@@ -115,6 +130,10 @@ function App() {
   const isPoweredOn = state?.isPoweredOn ?? false
   const powerText = state ? (isPoweredOn ? 'On' : 'Off') : '—'
   const powerClass = state ? (isPoweredOn ? 'on' : 'off') : ''
+  const tunerBand =
+    state?.currentInputId === 'am' || state?.currentInputId === 'fm'
+      ? state.currentInputId
+      : null
   const currentInputId =
     sources.find((source) => source.isCurrent)?.id ?? state?.currentInputId ?? ''
 
@@ -125,17 +144,6 @@ function App() {
 
       <section className="panel state" aria-label="Device state">
         <div className="state-controls">
-          <input
-            id="ip"
-            name="ipAddress"
-            type="text"
-            placeholder="192.168.1.100"
-            autoComplete="off"
-            spellCheck={false}
-            aria-label="Device IP"
-            value={ipAddress}
-            onChange={(event) => setIpAddress(event.target.value)}
-          />
           <button onClick={handleDiscover} disabled={busy}>
             Discover Device
           </button>
@@ -161,6 +169,55 @@ function App() {
           </div>
         </div>
       </section>
+
+      {tunerBand && (
+        <section className="panel tuner" aria-label="Tuner presets">
+          <label htmlFor="preset">
+            Tuner preset ({tunerBand === 'am' ? 'AM' : 'FM'})
+          </label>
+          <div className="tuner-controls">
+            <button
+              onClick={() =>
+                run('Preset down', async () => {
+                  setTuner(await tunerPresetDown(ipAddress))
+                })
+              }
+              disabled={busy}
+              aria-label="Previous preset"
+            >
+              ◀
+            </button>
+            <select
+              id="preset"
+              value={tuner?.preset ?? ''}
+              disabled={busy}
+              onChange={(event) => {
+                const preset = Number(event.target.value)
+                run('Switching preset', async () => {
+                  setTuner(await setTunerPreset(ipAddress, preset))
+                })
+              }}
+            >
+              {Array.from({ length: 40 }, (_, index) => index + 1).map((preset) => (
+                <option key={preset} value={preset}>
+                  {preset}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() =>
+                run('Preset up', async () => {
+                  setTuner(await tunerPresetUp(ipAddress))
+                })
+              }
+              disabled={busy}
+              aria-label="Next preset"
+            >
+              ▶
+            </button>
+          </div>
+        </section>
+      )}
 
       <section className="panel">
         <label htmlFor="source">Source</label>

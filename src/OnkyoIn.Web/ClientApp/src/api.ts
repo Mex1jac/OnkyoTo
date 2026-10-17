@@ -22,6 +22,12 @@ export interface InputSource {
   isCurrent: boolean
 }
 
+/** Tuner state: the active band ("am"/"fm") and the current preset. */
+export interface TunerState {
+  band: string | null
+  preset: number | null
+}
+
 /** Shape of an ASP.NET Core ProblemDetails error response. */
 interface ProblemDetails {
   title?: string
@@ -101,3 +107,23 @@ export const volumeUp = (ipAddress: string) => post('/api/device/volume/up', { i
 export const volumeDown = (ipAddress: string) => post('/api/device/volume/down', { ipAddress }).then(() => undefined)
 export const setInput = (ipAddress: string, inputId: string) =>
   post('/api/device/input', { ipAddress, inputId }).then(() => undefined)
+
+export async function getTuner(ipAddress: string): Promise<TunerState | null> {
+  const response = await request(`/api/device/tuner?ipAddress=${encodeURIComponent(ipAddress)}`)
+  return (await response.json()) as TunerState | null
+}
+
+export async function setTunerPreset(ipAddress: string, preset: number): Promise<TunerState> {
+  const response = await post('/api/device/tuner/preset', { ipAddress, preset })
+  return (await response.json()) as TunerState
+}
+
+export async function tunerPresetUp(ipAddress: string): Promise<TunerState> {
+  const response = await post('/api/device/tuner/preset/up', { ipAddress })
+  return (await response.json()) as TunerState
+}
+
+export async function tunerPresetDown(ipAddress: string): Promise<TunerState> {
+  const response = await post('/api/device/tuner/preset/down', { ipAddress })
+  return (await response.json()) as TunerState
+}
