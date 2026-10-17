@@ -99,7 +99,7 @@ Disponibles tanto en `OnkyoIn.Control` como en `OnkyoIn.Web` (Web los reenvía):
 | `GET` | `/api/device/discover` | Descubre un dispositivo y devuelve su IP |
 | `GET` | `/api/device/state?ipAddress={ip}` | Lee estado (encendido, volumen y fuente actual) |
 | `GET` | `/api/device/inputs?ipAddress={ip}` | Lista las fuentes disponibles y marca la actual |
-| `GET` | `/api/device/tuner?ipAddress={ip}` | Lee el tuner (banda AM/FM y preset actual) |
+| `GET` | `/api/device/tuner?ipAddress={ip}` | Lee el tuner (banda AM/FM y preset actual); devuelve **204** si la fuente activa no es AM/FM |
 | `POST` | `/api/device/power-on` | Enciende el dispositivo |
 | `POST` | `/api/device/power/toggle` | Alterna el encendido y devuelve el nuevo estado |
 | `POST` | `/api/device/input` | Cambia la fuente de entrada |

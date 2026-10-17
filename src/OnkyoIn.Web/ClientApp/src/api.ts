@@ -110,6 +110,8 @@ export const setInput = (ipAddress: string, inputId: string) =>
 
 export async function getTuner(ipAddress: string): Promise<TunerState | null> {
   const response = await request(`/api/device/tuner?ipAddress=${encodeURIComponent(ipAddress)}`)
+  // 204 No Content: the current input is not AM/FM, so there is no tuner state.
+  if (response.status === 204) return null
   return (await response.json()) as TunerState | null
 }
 

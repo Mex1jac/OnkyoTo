@@ -99,7 +99,10 @@ public class DeviceController : ControllerBase
         CancellationToken cancellationToken)
     {
         var tuner = await _deviceApp.GetTunerAsync(ipAddress, cancellationToken);
-        return Ok(tuner is null ? null : new TunerStateResponse(tuner.Band, tuner.Preset));
+        // 204 when the input is not AM or FM: there is no tuner state.
+        return tuner is null
+            ? NoContent()
+            : Ok(new TunerStateResponse(tuner.Band, tuner.Preset));
     }
 
     /// <summary>Selects a tuner preset (1-40) on the AM or FM band.</summary>

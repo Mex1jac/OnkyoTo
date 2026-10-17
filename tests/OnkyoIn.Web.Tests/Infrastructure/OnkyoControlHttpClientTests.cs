@@ -248,6 +248,32 @@ public class OnkyoControlHttpClientTests
     }
 
     [Fact]
+    public async Task GetTunerAsync_WhenNoContent_ReturnsNull()
+    {
+        // The control API answers 204 when the input is not AM or FM.
+        var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.NoContent));
+
+        var tuner = await client.GetTunerAsync("192.168.1.50");
+
+        Assert.Null(tuner);
+    }
+
+    [Fact]
+    public async Task GetTunerAsync_WhenEmptyBody_ReturnsNull()
+    {
+        // A 200 with an empty body must also be tolerated: parsing it as
+        // JSON used to throw ("The input does not contain any JSON tokens").
+        var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(" ", Encoding.UTF8, "application/json"),
+        });
+
+        var tuner = await client.GetTunerAsync("192.168.1.50");
+
+        Assert.Null(tuner);
+    }
+
+    [Fact]
     public async Task GetTunerAsync_WhenProblemDetails_ThrowsWithDetail()
     {
         var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.BadGateway)

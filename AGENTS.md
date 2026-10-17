@@ -84,6 +84,8 @@
 | 21 | Implementar la seleccion de presets para am y fm  | Alta | Hecho | `GET /api/device/tuner`, `POST /api/device/tuner/preset` (+ `/up`, `/down`); `PRSxx`/`PRSUP`/`PRSDOWN` crudos + verificación `PRSQSTN`; panel Tuner en la SPA (AM/FM, select 1–40 + ◀ ▶) |
 | 22 | Quitar la caja de texto de la ip que esta a un costado del boton discover device  | Alta | Hecho | Input de IP eliminado de la caja de estado; la IP se fija con Discover o `?ip=...` |
 | 23 | poner un espacio entre los titulos OnkyioIn y Contrl your onkyio device | Alta | Hecho | `margin-bottom` del `h1` subido a `0.75rem` |
+| 24 | El encendido inicial marca error de timeout pero enciende el aparato | Alto | En prueba | El acuse de encendido tarda más que el timeout; `Onkyo:PowerOnTimeoutMs` subido a 7000 en `appsettings.json` (probando en el aparato real). Si persiste, implementar sondeo de estado (`PowerOnVerifyTimeoutMs`) |
+| 25 | El cambio de fuente responde con error de JSON en el frontend pero cambia correctamente el aparato | Alto | Hecho | `GET tuner` devolvía 200 con cuerpo vacío cuando la fuente no es AM/FM; ahora devuelve **204** (Control y Web) y el cliente HTTP de Web y la SPA toleran el 204/cuerpo vacío → null |
 
 ## 9. Notas y decisiones
 - Se usa **DDD en carpetas** dentro de 2 proyectos (no un proyecto por capa) para mantenerlo simple, según decisión del usuario.

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using OnkyoIn.Web.Application.Dtos;
 using OnkyoIn.Web.Domain.Exceptions;
 using OnkyoIn.Web.Domain.Gateways;
@@ -179,7 +180,16 @@ public class OnkyoControlHttpClient : IOnkyoControlClient
             await ThrowProblemAsync(response, cancellationToken);
         }
 
-        return await response.Content.ReadFromJsonAsync<T>(cancellationToken);
+        // 204 No Content (or any empty body) means "no value": the control
+        // API answers e.g. the tuner state with 204 when the input is not
+        // AM or FM. Parsing an empty body as JSON would throw.
+        var json = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return default;
+        }
+
+        return JsonSerializer.Deserialize<T>(json, JsonSerializerOptions.Web);
     }
 
     private static async Task ThrowProblemAsync(
