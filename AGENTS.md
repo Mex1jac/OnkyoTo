@@ -86,6 +86,9 @@
 | 23 | poner un espacio entre los titulos OnkyioIn y Contrl your onkyio device | Alta | Hecho | `margin-bottom` del `h1` subido a `0.75rem` |
 | 24 | El encendido inicial marca error de timeout pero enciende el aparato | Alto | En prueba | El acuse de encendido tarda más que el timeout; `Onkyo:PowerOnTimeoutMs` subido a 7000 en `appsettings.json` (probando en el aparato real). Si persiste, implementar sondeo de estado (`PowerOnVerifyTimeoutMs`) |
 | 25 | El cambio de fuente responde con error de JSON en el frontend pero cambia correctamente el aparato | Alto | Hecho | `GET tuner` devolvía 200 con cuerpo vacío cuando la fuente no es AM/FM; ahora devuelve **204** (Control y Web) y el cliente HTTP de Web y la SPA toleran el 204/cuerpo vacío → null |
+| 26 | cuando entras a la pagina antes de oprimir el boton de discover la ip debe mostrarse vacia | Alta | Hecho | La SPA ya no lee ni escribe `?ip=` en la URL; siempre arranca con la IP vacía y se rellena con Discover (verificado en el navegador) |
+| 27 | El boton de discover device esta desalineado del resto de los componetes visuales | Alta | Hecho | Botón a ancho completo dentro de la tarjeta de estado (`flex: 1`), alineado con los valores y con el resto de la página |
+| 28 | Los botones de power on volume + y volume - tambien estan deslineados del resto de componentes visuales | Alta | Hecho | Fila `.controls` convertida en grid de columnas iguales (`repeat(auto-fit, minmax(120px, 1fr))`): mismo ancho todos, borde alineado con el select; en pantallas estrechas pasa a 2+1 filas |
 
 ## 9. Notas y decisiones
 - Se usa **DDD en carpetas** dentro de 2 proyectos (no un proyecto por capa) para mantenerlo simple, según decisión del usuario.

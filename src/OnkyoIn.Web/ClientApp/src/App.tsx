@@ -25,25 +25,14 @@ interface Feedback {
 }
 
 function App() {
-  const [ipAddress, setIpAddress] = useState(
-    () => new URLSearchParams(window.location.search).get('ip') ?? '',
-  )
+  // The page always starts without an IP: the user has to press Discover.
+  // (The ?ip= deep link was removed on purpose so every visit starts clean.)
+  const [ipAddress, setIpAddress] = useState('')
   const [state, setState] = useState<DeviceState | null>(null)
   const [tuner, setTuner] = useState<TunerState | null>(null)
   const [sources, setSources] = useState<InputSource[]>([])
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [busy, setBusy] = useState(false)
-
-  // Keep the device IP in the URL so the state is deep-linkable and survives reloads.
-  useEffect(() => {
-    const url = new URL(window.location.href)
-    if (ipAddress) {
-      url.searchParams.set('ip', ipAddress)
-    } else {
-      url.searchParams.delete('ip')
-    }
-    window.history.replaceState(null, '', url)
-  }, [ipAddress])
 
   // Runs an async action while showing status, and reports success or failure.
   async function run(label: string, action: () => Promise<void>) {

@@ -64,9 +64,12 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
+/* Equal-width columns aligned with the rest of the page controls;
+   on narrow screens it falls back to 2+1 rows automatically. */
 .controls {
-  flex-direction: row;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
 }
 
 .status {
@@ -99,6 +102,12 @@ button:focus-visible {
   display: flex;
   flex-direction: row;
   gap: 0.75rem;
+}
+
+/* The Discover button spans the full card so it lines up with the
+   values below and with the rest of the page controls. */
+.state-controls button {
+  flex: 1;
 }
 
 .state-values {
